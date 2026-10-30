@@ -56,11 +56,8 @@ main{max-width:1280px;margin:auto;padding:8px 24px 48px}
 #detail dt{color:var(--muted)}
 #detail dd{margin:0}
 #detail h4{margin:18px 0 6px;font-size:13px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
-.mandate{border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:14px}
-.mandate .row{margin:4px 0}
 .pill{display:inline-block;font-size:12px;border:1px solid var(--line);border-radius:6px;padding:1px 6px;margin:2px 4px 2px 0}
 .pill.no{border-color:var(--warn);color:var(--warn)}
-.forb{list-style:none;padding:0;margin:4px 0 0}.forb li{margin:0 0 6px}.why{color:var(--muted);font-size:13px}
 .warns{list-style:none;padding:0;margin:0}
 .warns li{background:var(--warn-bg);color:var(--warn);border-radius:6px;padding:5px 9px;margin-bottom:5px;font-size:13px}
 .link{background:none;border:0;padding:0;color:var(--accent);cursor:pointer;font:inherit;text-decoration:underline}
@@ -158,7 +155,7 @@ function showDetail(a){
   const d = document.getElementById("detail");
   const pills = (xs, no) => (xs||[]).map(x => `<span class="pill${no?" no":""}">${esc(x)}</span>`).join("") || "—";
   const links = xs => (xs||[]).length ? xs.map(r => `<button class="link" data-repo="${esc(r)}">${esc(byRepo(r)?.name || r)}</button>`).join(", ") : "—";
-  const m = a.mandate || {};
+  const noMandate = (a.warnings||[]).includes("no mandate block");
   d.innerHTML = `<button class="close" aria-label="Close">×</button>
     <h3>${esc(a.name)}</h3>
     <a href="https://github.com/${esc(a.repo)}" target="_blank" rel="noopener">${esc(a.repo)}</a>
@@ -170,15 +167,9 @@ function showDetail(a){
       <dt>Depends on</dt><dd>${links(a.depends_on)}</dd><dt>Used by</dt><dd>${links(a.used_by)}</dd>
       <dt>Source</dt><dd>${a.source_kind==="seed" ? "seed manifest in this repo" : "agent.yaml in agent repo"}</dd></dl>
     <h4>Mandate</h4>
-    ${a.mandate ? `<div class="mandate">
-      <div class="row">${esc(m.purpose||"")}</div>
-      <div class="row"><b>Allowed:</b> ${pills(m.allowed_tools)}</div>
-      <div class="row"><b>Forbidden:</b> ${(m.forbidden_actions||[]).length ? `<ul class="forb">${m.forbidden_actions.map(f => `<li><span class="pill no">${esc(f.action ?? f)}</span>${f.rationale ? ` <span class="why">${esc(f.rationale)}</span>` : ""}</li>`).join("")}</ul>` : "—"}</div>
-      <div class="row"><b>Trusted inputs:</b> ${pills(m.trusted_inputs)}</div>
-      <div class="row"><b>Max runtime:</b> ${m.max_runtime_minutes ? esc(m.max_runtime_minutes)+" min" : "—"}</div>
-      <div class="row"><b>Human approval for:</b> ${pills(m.human_approval_required_for)}</div>
-      <div class="row"><b>Evidence policy:</b> ${m.evidence_policy ? `<span class="pill">${esc(m.evidence_policy)}</span>` : "—"}</div>
-      <div class="row"><b>Sharing:</b> ${m.sharing ? `<span class="pill">${esc(m.sharing)}</span>` : "—"}</div></div>` : `<p class="empty">No mandate declared.</p>`}`
+    ${a.has_mandate ? `<p>Declared; all mandate checks pass.</p>`
+      : noMandate ? `<p class="empty">No mandate declared.</p>`
+      : `<p>Declared, with issues (see Checks).</p>`}`
     : `<p class="empty">This repo has no agent.yaml yet.</p><dl><dt>Used by</dt><dd>${links(a.used_by)}</dd></dl>`}
     <h4>Checks</h4>
     ${(a.warnings||[]).length ? `<ul class="warns">${a.warnings.map(w=>`<li>${esc(w)}</li>`).join("")}</ul>` : `<p>All checks pass.</p>`}`;
