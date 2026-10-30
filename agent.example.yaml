@@ -11,6 +11,8 @@ open_slots: 0
 description: Create audit work program based on the delivered risk-control matrix from UC 7.
 
 # The approved mandate. Changing this requires a pull request.
+# The build checks it but never publishes it: map.json only carries
+# has_mandate (true when this block is present and passes every check).
 mandate:
   purpose: Turn an approved UC7 risk-control matrix into a GIAS-compliant audit work program.
   allowed_tools: [read_rcm, write_workprogram, claude_api]

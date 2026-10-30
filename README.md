@@ -12,7 +12,7 @@
 
 *How it works.*
 1. `agent.yaml` schema: see `agent.example.yaml`.
-2. `scripts/build_map.py` reads the manifests from the repos in `repos.txt` and writes `map.json`. Run it locally with `pip install pyyaml && python scripts/build_map.py`.
+2. `scripts/build_map.py` reads the manifests from the repos in `repos.txt` and writes `map.json`. `map.json` is public, so the `mandate` block is checked but not copied into it; each agent gets `has_mandate: true/false` instead (true only when the block is present and passes every check). Run it locally with `pip install pyyaml && python scripts/build_map.py`.
 3. `index.html` renders `map.json` as the island map and an overview. `.nojekyll` tells GitHub Pages to serve these files as they are, without a Jekyll build.
 
 Built at the SAAF Agents Gone Rogue hackathon (6 Oct 2026) by the Dining Table Crew: Tony Barratt, Anja Nell, Bob McLaughlin, Francois Marais.

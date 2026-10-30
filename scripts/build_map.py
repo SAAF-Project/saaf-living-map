@@ -72,6 +72,12 @@ def check(m):
         w.append(f"unknown island: {m['island']}")
     if m.get("maturity") and m["maturity"] not in MATURITY:
         w.append(f"unknown maturity: {m['maturity']}")
+    return w + check_mandate(m)
+
+
+def check_mandate(m):
+    """Return warnings about the mandate block alone."""
+    w = []
     mandate = m.get("mandate")
     if not isinstance(mandate, dict):
         w.append("no mandate block")
@@ -118,6 +124,7 @@ def main():
             kind = "seed"
         if text is None:
             agents[repo] = {"repo": repo, "name": repo.split("/")[-1], "status": "unmapped",
+                            "has_mandate": False,
                             "warnings": ["no agent.yaml in repo and no seed manifest"]}
             print(f"  - {repo}: unmapped")
             continue
@@ -125,7 +132,7 @@ def main():
             m = yaml.safe_load(text) or {}
         except yaml.YAMLError as e:
             agents[repo] = {"repo": repo, "name": repo.split("/")[-1], "status": "invalid",
-                            "source": src, "warnings": [f"YAML error: {e}"]}
+                            "source": src, "has_mandate": False, "warnings": [f"YAML error: {e}"]}
             print(f"  x {repo}: invalid YAML")
             continue
         m["repo"] = m.get("repo") or repo
@@ -135,6 +142,10 @@ def main():
         m["source_kind"] = kind
         m["source"] = src
         m["warnings"] = check(m)
+        # map.json is public but manifests may come from private repos:
+        # publish only whether a clean mandate exists, never the block itself.
+        m["has_mandate"] = isinstance(m.get("mandate"), dict) and not check_mandate(m)
+        m.pop("mandate", None)
         agents[repo] = m
         print(f"  + {repo}: {kind} ({len(m['warnings'])} warnings)")
 
@@ -143,6 +154,7 @@ def main():
         for d in m.get("depends_on", []):
             if d not in agents:
                 agents[d] = {"repo": d, "name": d.split("/")[-1], "status": "unmapped",
+                             "has_mandate": False,
                              "warnings": ["referenced as a dependency but not in repos.txt"]}
 
     # Reverse edges: who uses me.
