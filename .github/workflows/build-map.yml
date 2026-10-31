@@ -1,6 +1,8 @@
 name: Build living map
 
 on:
+  pull_request:
+    paths: [repos.txt, "manifests/**", "scripts/**", "tests/**", agent.example.yaml, .github/workflows/build-map.yml]
   push:
     branches: [main]
     paths: [repos.txt, "manifests/**", scripts/build_map.py, "tests/**"]
@@ -12,7 +14,8 @@ permissions:
   contents: write
 
 jobs:
-  build:
+  # Runs on every trigger, pull requests included: the only job a PR gets.
+  test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -21,6 +24,19 @@ jobs:
           python-version: "3.12"
       - run: pip install pyyaml
       - run: python -m unittest discover tests
+
+  # Builds and commits map.json: push to main, schedule and manual dispatch only,
+  # never from a pull request.
+  build:
+    needs: test
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pyyaml
       - run: python scripts/build_map.py
         env:
           GITHUB_TOKEN: ${{ secrets.SAAF_READ_TOKEN || secrets.GITHUB_TOKEN }}
