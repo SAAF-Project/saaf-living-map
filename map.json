@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-31T13:38:24+00:00",
+  "generated_at": "2026-10-31T14:45:10+00:00",
   "islands": [
     {
       "id": "foundation",
@@ -68,8 +68,8 @@
       "governance": 6,
       "quarry": 0
     },
-    "with_warnings": 18,
-    "confirmed": 0
+    "with_warnings": 17,
+    "confirmed": 1
   },
   "agents": [
     {
@@ -452,7 +452,10 @@
       "tags": [
         "RCM",
         "GIAS",
-        "UC7"
+        "UC7",
+        "COSO",
+        "COBIT",
+        "ITGC"
       ],
       "depends_on": [],
       "used_by": [
@@ -460,19 +463,11 @@
       ],
       "open_slots": 0,
       "status": "mapped",
-      "source_kind": "seed",
-      "source": "manifests/SAAF-Project__RCM-Builder.yaml",
-      "warnings": [
-        "no mandate block"
-      ],
-      "has_mandate": false,
-      "confirmed": false,
-      "review": {
-        "verdict": "reviewed",
-        "structure": "Three-stage pipeline (normalise → design → IT validation)",
-        "has_tests": true,
-        "has_samples": false
-      }
+      "source_kind": "repo",
+      "source": "https://raw.githubusercontent.com/SAAF-Project/RCM-Builder/main/agent.yaml",
+      "warnings": [],
+      "has_mandate": true,
+      "confirmed": true
     },
     {
       "name": "SAAF Circuit Breaker",
