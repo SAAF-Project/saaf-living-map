@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-31T08:07:40+00:00",
+  "generated_at": "2026-10-31T09:49:13+00:00",
   "islands": [
     {
       "id": "foundation",
@@ -78,21 +78,16 @@
       "maturity": "ready",
       "category": "Risk & Controls",
       "language": "Python",
-      "depends_on": [],
+      "description": "Drafts and hardens AUDIT-CRITERIA.md for SAAF agent repos; includes the UC7-UC8-UC9 orchestrator and mandate guard.",
       "tags": [
         "UC7",
         "UC8",
         "Mandate guard",
         "Agent hand-off"
       ],
+      "depends_on": [],
+      "used_by": [],
       "open_slots": 0,
-      "description": "Drafts and hardens AUDIT-CRITERIA.md for SAAF agent repos; includes the UC7-UC8-UC9 orchestrator and mandate guard.",
-      "review": {
-        "verdict": "reviewed",
-        "structure": "Orchestrators under tools/scripts + criteria_checks + replay harness",
-        "has_tests": false,
-        "has_samples": true
-      },
       "status": "mapped",
       "source_kind": "seed",
       "source": "manifests/SAAF-Project__Audit-criteria.yaml",
@@ -100,7 +95,13 @@
         "no mandate block"
       ],
       "has_mandate": false,
-      "used_by": []
+      "confirmed": false,
+      "review": {
+        "verdict": "reviewed",
+        "structure": "Orchestrators under tools/scripts + criteria_checks + replay harness",
+        "has_tests": false,
+        "has_samples": true
+      }
     },
     {
       "name": "Work Program",
@@ -109,22 +110,23 @@
       "maturity": "building",
       "category": "Compliance",
       "language": "Python",
-      "depends_on": [
-        "SAAF-Project/RCM-Builder"
-      ],
+      "description": "Create audit work program based on the delivered risk-control matrix from UC 7.",
       "tags": [
         "audit",
         "work-program",
         "anthropic"
       ],
+      "depends_on": [
+        "SAAF-Project/RCM-Builder"
+      ],
+      "used_by": [],
       "open_slots": 0,
-      "description": "Create audit work program based on the delivered risk-control matrix from UC 7.",
       "status": "mapped",
       "source_kind": "seed",
       "source": "manifests/SAAF-Project__Audit-Work-Program-Agent-UC-8-.yaml",
       "warnings": [],
       "has_mandate": true,
-      "used_by": []
+      "confirmed": false
     },
     {
       "name": "Compliance Audit Agent",
@@ -133,19 +135,14 @@
       "maturity": "ready",
       "category": "Compliance",
       "language": "Python",
-      "depends_on": [],
+      "description": "Triages internal policies for a regulatory clause, assesses compliance and renders a Word report.",
       "tags": [
         "Compliance audit",
         "Evidence"
       ],
+      "depends_on": [],
+      "used_by": [],
       "open_slots": 0,
-      "description": "Triages internal policies for a regulatory clause, assesses compliance and renders a Word report.",
-      "review": {
-        "verdict": "reviewed",
-        "structure": "Python CLI with progress-folder outputs",
-        "has_tests": true,
-        "has_samples": true
-      },
       "status": "mapped",
       "source_kind": "seed",
       "source": "manifests/SAAF-Project__Compliance-Audit-Agent.yaml",
@@ -153,7 +150,13 @@
         "no mandate block"
       ],
       "has_mandate": false,
-      "used_by": []
+      "confirmed": false,
+      "review": {
+        "verdict": "reviewed",
+        "structure": "Python CLI with progress-folder outputs",
+        "has_tests": true,
+        "has_samples": true
+      }
     },
     {
       "name": "Compliance Report Generator",
@@ -162,21 +165,16 @@
       "maturity": "ready",
       "category": "Compliance",
       "language": "Python",
-      "depends_on": [],
+      "description": "Finds the relevant regulatory frameworks for a given financial entity.",
       "tags": [
         "DORA",
         "NIS2",
         "GDPR",
         "Grounding"
       ],
+      "depends_on": [],
+      "used_by": [],
       "open_slots": 0,
-      "description": "Finds the relevant regulatory frameworks for a given financial entity.",
-      "review": {
-        "verdict": "reviewed",
-        "structure": "Python package + CLI, CI (tests, Ruff, weekly e2e clause check)",
-        "has_tests": true,
-        "has_samples": false
-      },
       "status": "mapped",
       "source_kind": "seed",
       "source": "manifests/SAAF-Project__Compliance-Report-Generator.yaml",
@@ -184,7 +182,13 @@
         "no mandate block"
       ],
       "has_mandate": false,
-      "used_by": []
+      "confirmed": false,
+      "review": {
+        "verdict": "reviewed",
+        "structure": "Python package + CLI, CI (tests, Ruff, weekly e2e clause check)",
+        "has_tests": true,
+        "has_samples": false
+      }
     },
     {
       "name": "CUEC Crosscheck",
@@ -193,20 +197,15 @@
       "maturity": "ready",
       "category": "Compliance",
       "language": "Python",
-      "depends_on": [],
+      "description": "Matches vendor ISAE 3402 / SOC 2 CUECs to the organisation's controls.",
       "tags": [
         "CUEC",
         "ISAE 3402",
         "SOC 2"
       ],
+      "depends_on": [],
+      "used_by": [],
       "open_slots": 0,
-      "description": "Matches vendor ISAE 3402 / SOC 2 CUECs to the organisation's controls.",
-      "review": {
-        "verdict": "reviewed",
-        "structure": "Single-file MVP + sample inputs",
-        "has_tests": false,
-        "has_samples": true
-      },
       "status": "mapped",
       "source_kind": "seed",
       "source": "manifests/SAAF-Project__CUEC_Crosscheck.yaml",
@@ -214,7 +213,13 @@
         "no mandate block"
       ],
       "has_mandate": false,
-      "used_by": []
+      "confirmed": false,
+      "review": {
+        "verdict": "reviewed",
+        "structure": "Single-file MVP + sample inputs",
+        "has_tests": false,
+        "has_samples": true
+      }
     },
     {
       "name": "ExecGRC",
@@ -223,21 +228,16 @@
       "maturity": "ready",
       "category": "Audit Reporting",
       "language": "Python",
-      "depends_on": [],
+      "description": "Executive GRC reporting: turns risk and control results into an executive summary.",
       "tags": [
         "GRC",
         "Risk & Controls",
         "Executive Reporting",
         "ISO 27001"
       ],
+      "depends_on": [],
+      "used_by": [],
       "open_slots": 0,
-      "description": "Executive GRC reporting: turns risk and control results into an executive summary.",
-      "review": {
-        "verdict": "reviewed",
-        "structure": "Python package (src/execsummary_grc) + CLI / console-script",
-        "has_tests": true,
-        "has_samples": true
-      },
       "status": "mapped",
       "source_kind": "seed",
       "source": "manifests/SAAF-Project__ExecGRC.yaml",
@@ -245,7 +245,13 @@
         "no mandate block"
       ],
       "has_mandate": false,
-      "used_by": []
+      "confirmed": false,
+      "review": {
+        "verdict": "reviewed",
+        "structure": "Python package (src/execsummary_grc) + CLI / console-script",
+        "has_tests": true,
+        "has_samples": true
+      }
     },
     {
       "name": "Executive Summary Writer",
@@ -254,20 +260,15 @@
       "maturity": "ready",
       "category": "Audit Reporting",
       "language": "Python",
-      "depends_on": [],
+      "description": "Guides an audit manager through root cause, finding relationships, storyline and tone before writing the Executive Board summary.",
       "tags": [
         "Executive summary",
         "LangGraph",
         "Reporting"
       ],
+      "depends_on": [],
+      "used_by": [],
       "open_slots": 0,
-      "description": "Guides an audit manager through root cause, finding relationships, storyline and tone before writing the Executive Board summary.",
-      "review": {
-        "verdict": "reviewed",
-        "structure": "Python scripts/graph pipeline + FastAPI agent-service + frontend",
-        "has_tests": true,
-        "has_samples": true
-      },
       "status": "mapped",
       "source_kind": "seed",
       "source": "manifests/SAAF-Project__Executive-Summary-Writer.yaml",
@@ -275,7 +276,13 @@
         "no mandate block"
       ],
       "has_mandate": false,
-      "used_by": []
+      "confirmed": false,
+      "review": {
+        "verdict": "reviewed",
+        "structure": "Python scripts/graph pipeline + FastAPI agent-service + frontend",
+        "has_tests": true,
+        "has_samples": true
+      }
     },
     {
       "name": "GDPR AI Audit",
@@ -284,20 +291,15 @@
       "maturity": "ready",
       "category": "Compliance",
       "language": "Python",
-      "depends_on": [],
+      "description": "Audits AI systems for GDPR alignment, with PII masking, automated DPIA generation and risk scoring.",
       "tags": [
         "GDPR",
         "PII",
         "DPIA"
       ],
+      "depends_on": [],
+      "used_by": [],
       "open_slots": 0,
-      "description": "Audits AI systems for GDPR alignment, with PII masking, automated DPIA generation and risk scoring.",
-      "review": {
-        "verdict": "reviewed",
-        "structure": "Python package + Streamlit UI",
-        "has_tests": true,
-        "has_samples": true
-      },
       "status": "mapped",
       "source_kind": "seed",
       "source": "manifests/SAAF-Project__GDPR-AI-Audit-Agent.yaml",
@@ -305,7 +307,13 @@
         "no mandate block"
       ],
       "has_mandate": false,
-      "used_by": []
+      "confirmed": false,
+      "review": {
+        "verdict": "reviewed",
+        "structure": "Python package + Streamlit UI",
+        "has_tests": true,
+        "has_samples": true
+      }
     },
     {
       "name": "Hallucination Detection",
@@ -314,21 +322,16 @@
       "maturity": "ready",
       "category": "Governance & Guardrails",
       "language": "Python",
-      "depends_on": [],
+      "description": "Hallucination detection for AI-generated audit findings.",
       "tags": [
         "Hallucination detection",
         "RAG",
         "Claim verification",
         "BYOK"
       ],
+      "depends_on": [],
+      "used_by": [],
       "open_slots": 0,
-      "description": "Hallucination detection for AI-generated audit findings.",
-      "review": {
-        "verdict": "reviewed",
-        "structure": "Pipeline package: extractor (Haiku) -> verifier (Sonnet) -> aggregator (pure Python) -> annotator, markdown RAG corpus, CLI entrypoint",
-        "has_tests": true,
-        "has_samples": true
-      },
       "status": "mapped",
       "source_kind": "seed",
       "source": "manifests/SAAF-Project__hallucination-detection-agent.yaml",
@@ -336,7 +339,13 @@
         "no mandate block"
       ],
       "has_mandate": false,
-      "used_by": []
+      "confirmed": false,
+      "review": {
+        "verdict": "reviewed",
+        "structure": "Pipeline package: extractor (Haiku) -> verifier (Sonnet) -> aggregator (pure Python) -> annotator, markdown RAG corpus, CLI entrypoint",
+        "has_tests": true,
+        "has_samples": true
+      }
     },
     {
       "name": "Judging Found Controls",
@@ -345,20 +354,15 @@
       "maturity": "ready",
       "category": "Risk & Controls",
       "language": "Python",
-      "depends_on": [],
+      "description": "Judges the controls found in a policy document to avoid hallucination.",
       "tags": [
         "Policy",
         "Controls",
         "Hallucination check"
       ],
+      "depends_on": [],
+      "used_by": [],
       "open_slots": 0,
-      "description": "Judges the controls found in a policy document to avoid hallucination.",
-      "review": {
-        "verdict": "reviewed",
-        "structure": "Single-file CLI agent (agent.py, argparse) + tests/ + samples/",
-        "has_tests": true,
-        "has_samples": true
-      },
       "status": "mapped",
       "source_kind": "seed",
       "source": "manifests/SAAF-Project__judging-found-controls.yaml",
@@ -366,7 +370,13 @@
         "no mandate block"
       ],
       "has_mandate": false,
-      "used_by": []
+      "confirmed": false,
+      "review": {
+        "verdict": "reviewed",
+        "structure": "Single-file CLI agent (agent.py, argparse) + tests/ + samples/",
+        "has_tests": true,
+        "has_samples": true
+      }
     },
     {
       "name": "LLM OWASP Review",
@@ -375,20 +385,15 @@
       "maturity": "ready",
       "category": "AI Security",
       "language": "Python",
-      "depends_on": [],
+      "description": "Reviews LLM applications against the OWASP Top 10 for LLMs.",
       "tags": [
         "OWASP",
         "LLM",
         "Red-team"
       ],
+      "depends_on": [],
+      "used_by": [],
       "open_slots": 0,
-      "description": "Reviews LLM applications against the OWASP Top 10 for LLMs.",
-      "review": {
-        "verdict": "reviewed",
-        "structure": "CLI + Claude Code slash command",
-        "has_tests": false,
-        "has_samples": true
-      },
       "status": "mapped",
       "source_kind": "seed",
       "source": "manifests/SAAF-Project__llm_owasp.yaml",
@@ -396,7 +401,13 @@
         "no mandate block"
       ],
       "has_mandate": false,
-      "used_by": []
+      "confirmed": false,
+      "review": {
+        "verdict": "reviewed",
+        "structure": "CLI + Claude Code slash command",
+        "has_tests": false,
+        "has_samples": true
+      }
     },
     {
       "name": "OWASP Top 10 LLM Assessment",
@@ -405,20 +416,15 @@
       "maturity": "ready",
       "category": "AI Assurance",
       "language": "Python",
-      "depends_on": [],
+      "description": "Assesses whether other agents comply with the OWASP Top 10 risks for LLM applications.",
       "tags": [
         "OWASP LLM",
         "Code review",
         "Citations"
       ],
+      "depends_on": [],
+      "used_by": [],
       "open_slots": 0,
-      "description": "Assesses whether other agents comply with the OWASP Top 10 risks for LLM applications.",
-      "review": {
-        "verdict": "reviewed",
-        "structure": "CLI reviewer + web portal; llm-owasp package",
-        "has_tests": true,
-        "has_samples": true
-      },
       "status": "mapped",
       "source_kind": "seed",
       "source": "manifests/SAAF-Project__OWASP-top-10-LLM-assessment.yaml",
@@ -426,7 +432,13 @@
         "no mandate block"
       ],
       "has_mandate": false,
-      "used_by": []
+      "confirmed": false,
+      "review": {
+        "verdict": "reviewed",
+        "structure": "CLI reviewer + web portal; llm-owasp package",
+        "has_tests": true,
+        "has_samples": true
+      }
     },
     {
       "name": "RCM Builder (UC7)",
@@ -435,20 +447,17 @@
       "maturity": "ready",
       "category": "Risk & Controls",
       "language": "Python",
-      "depends_on": [],
+      "description": "Builds a Risk and Control Matrix from UC1-UC5 risk inputs: normalise risks, design controls, validate IT dependencies.",
       "tags": [
         "RCM",
         "GIAS",
         "UC7"
       ],
+      "depends_on": [],
+      "used_by": [
+        "SAAF-Project/Audit-Work-Program-Agent-UC-8-"
+      ],
       "open_slots": 0,
-      "description": "Builds a Risk and Control Matrix from UC1-UC5 risk inputs: normalise risks, design controls, validate IT dependencies.",
-      "review": {
-        "verdict": "reviewed",
-        "structure": "Three-stage pipeline (normalise → design → IT validation)",
-        "has_tests": true,
-        "has_samples": false
-      },
       "status": "mapped",
       "source_kind": "seed",
       "source": "manifests/SAAF-Project__RCM-Builder.yaml",
@@ -456,9 +465,13 @@
         "no mandate block"
       ],
       "has_mandate": false,
-      "used_by": [
-        "SAAF-Project/Audit-Work-Program-Agent-UC-8-"
-      ]
+      "confirmed": false,
+      "review": {
+        "verdict": "reviewed",
+        "structure": "Three-stage pipeline (normalise → design → IT validation)",
+        "has_tests": true,
+        "has_samples": false
+      }
     },
     {
       "name": "SAAF Circuit Breaker",
@@ -467,7 +480,7 @@
       "maturity": "ready",
       "category": "Governance & Guardrails",
       "language": "TypeScript/Python",
-      "depends_on": [],
+      "description": "Deterministic policy guards, drift detection, rollback and offline workpaper verification.",
       "tags": [
         "Circuit breaker",
         "Policy enforcement",
@@ -476,14 +489,9 @@
         "Offline verification",
         "Rollback"
       ],
+      "depends_on": [],
+      "used_by": [],
       "open_slots": 0,
-      "description": "Deterministic policy guards, drift detection, rollback and offline workpaper verification.",
-      "review": {
-        "verdict": "reviewed",
-        "structure": "Next.js 16 web app wrapping an offline Python CLI (forge-scan -> rehearsal -> sentinel -> verify), zero LLM calls in the CLI path",
-        "has_tests": true,
-        "has_samples": true
-      },
       "status": "mapped",
       "source_kind": "seed",
       "source": "manifests/SAAF-Project__SAAF-circuit-breaker.yaml",
@@ -491,7 +499,13 @@
         "no mandate block"
       ],
       "has_mandate": false,
-      "used_by": []
+      "confirmed": false,
+      "review": {
+        "verdict": "reviewed",
+        "structure": "Next.js 16 web app wrapping an offline Python CLI (forge-scan -> rehearsal -> sentinel -> verify), zero LLM calls in the CLI path",
+        "has_tests": true,
+        "has_samples": true
+      }
     },
     {
       "name": "Three-Way Match Audit",
@@ -500,20 +514,15 @@
       "maturity": "ready",
       "category": "Audit Reporting",
       "language": "Python",
-      "depends_on": [],
+      "description": "P2P 3-way match audit report generator with data and reporting tools.",
       "tags": [
         "P2P",
         "3-way-match",
         "PDF-report"
       ],
+      "depends_on": [],
+      "used_by": [],
       "open_slots": 0,
-      "description": "P2P 3-way match audit report generator with data and reporting tools.",
-      "review": {
-        "verdict": "reviewed",
-        "structure": "FastAPI webapp (webapp/) with matcher + parsers services, plus legacy PDF report script under tools/scripts/",
-        "has_tests": false,
-        "has_samples": true
-      },
       "status": "mapped",
       "source_kind": "seed",
       "source": "manifests/SAAF-Project__three-way-match-audit.yaml",
@@ -521,7 +530,13 @@
         "no mandate block"
       ],
       "has_mandate": false,
-      "used_by": []
+      "confirmed": false,
+      "review": {
+        "verdict": "reviewed",
+        "structure": "FastAPI webapp (webapp/) with matcher + parsers services, plus legacy PDF report script under tools/scripts/",
+        "has_tests": false,
+        "has_samples": true
+      }
     },
     {
       "name": "IAM Access Review",
@@ -530,21 +545,16 @@
       "maturity": "ready",
       "category": "AI Security",
       "language": "Python",
-      "depends_on": [],
+      "description": "User access review over the full population (IAM).",
       "tags": [
         "IAM",
         "Access Review",
         "ISO27001",
         "SOC2"
       ],
+      "depends_on": [],
+      "used_by": [],
       "open_slots": 0,
-      "description": "User access review over the full population (IAM).",
-      "review": {
-        "verdict": "reviewed",
-        "structure": "Streamlit app + standalone CLI + FastAPI web app (bart/ sub-package)",
-        "has_tests": true,
-        "has_samples": true
-      },
       "status": "mapped",
       "source_kind": "seed",
       "source": "manifests/SAAF-Project__Track-2---IAM-final.yaml",
@@ -552,7 +562,13 @@
         "no mandate block"
       ],
       "has_mandate": false,
-      "used_by": []
+      "confirmed": false,
+      "review": {
+        "verdict": "reviewed",
+        "structure": "Streamlit app + standalone CLI + FastAPI web app (bart/ sub-package)",
+        "has_tests": true,
+        "has_samples": true
+      }
     },
     {
       "name": "Evidence Collection & Extraction",
@@ -561,20 +577,15 @@
       "maturity": "ready",
       "category": "Evidence",
       "language": "Python",
-      "depends_on": [],
+      "description": "AI control assessment: upload policy PDFs and query them for evidence.",
       "tags": [
         "Compliance",
         "GIAS",
         "PDF"
       ],
+      "depends_on": [],
+      "used_by": [],
       "open_slots": 0,
-      "description": "AI control assessment: upload policy PDFs and query them for evidence.",
-      "review": {
-        "verdict": "reviewed",
-        "structure": "CLI + Streamlit web UI",
-        "has_tests": true,
-        "has_samples": false
-      },
       "status": "mapped",
       "source_kind": "seed",
       "source": "manifests/SAAF-Project__Track-2-Evidence-Collection-Extraction.yaml",
@@ -582,7 +593,13 @@
         "no mandate block"
       ],
       "has_mandate": false,
-      "used_by": []
+      "confirmed": false,
+      "review": {
+        "verdict": "reviewed",
+        "structure": "CLI + Streamlit web UI",
+        "has_tests": true,
+        "has_samples": false
+      }
     },
     {
       "name": "Vendor Guard",
@@ -591,21 +608,16 @@
       "maturity": "ready",
       "category": "Compliance",
       "language": "Python",
-      "depends_on": [],
+      "description": "Third-party risk management agent.",
       "tags": [
         "Vendor Risk",
         "DORA",
         "ISO 27001",
         "EU AI Act"
       ],
+      "depends_on": [],
+      "used_by": [],
       "open_slots": 0,
-      "description": "Third-party risk management agent.",
-      "review": {
-        "verdict": "reviewed",
-        "structure": "Multi-agent architecture (6 specialised agents + 4 synthesisers)",
-        "has_tests": true,
-        "has_samples": true
-      },
       "status": "mapped",
       "source_kind": "seed",
       "source": "manifests/SAAF-Project__Vendor_Guard.yaml",
@@ -613,7 +625,13 @@
         "no mandate block"
       ],
       "has_mandate": false,
-      "used_by": []
+      "confirmed": false,
+      "review": {
+        "verdict": "reviewed",
+        "structure": "Multi-agent architecture (6 specialised agents + 4 synthesisers)",
+        "has_tests": true,
+        "has_samples": true
+      }
     },
     {
       "name": "What's The News",
@@ -622,21 +640,16 @@
       "maturity": "ready",
       "category": "Evidence",
       "language": "JavaScript",
-      "depends_on": [],
+      "description": "Finds news from trusted sources and produces a personal regulatory news summary.",
       "tags": [
         "Node.js",
         "RSS",
         "news-aggregation",
         "regulatory"
       ],
+      "depends_on": [],
+      "used_by": [],
       "open_slots": 0,
-      "description": "Finds news from trusted sources and produces a personal regulatory news summary.",
-      "review": {
-        "verdict": "reviewed",
-        "structure": "Single-file Node.js HTTP app (ESM) with browser UI + node:test suite",
-        "has_tests": true,
-        "has_samples": false
-      },
       "status": "mapped",
       "source_kind": "seed",
       "source": "manifests/SAAF-Project__WhatsTheNews.yaml",
@@ -644,7 +657,13 @@
         "no mandate block"
       ],
       "has_mandate": false,
-      "used_by": []
+      "confirmed": false,
+      "review": {
+        "verdict": "reviewed",
+        "structure": "Single-file Node.js HTTP app (ESM) with browser UI + node:test suite",
+        "has_tests": true,
+        "has_samples": false
+      }
     }
   ]
 }
