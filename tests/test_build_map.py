@@ -141,6 +141,10 @@ class Build(unittest.TestCase):
         # Every seed is unconfirmed by default.
         self.assertTrue(all(not a["confirmed"] for a in mapped if a["source_kind"] == "seed"))
         self.assertEqual(sum(data["summary"]["by_island"].values()), len(mapped))
+        self.assertEqual(list(data["summary"]), ["agents", "mapped", "unmapped", "open_slots",
+                         "by_maturity", "by_island", "with_warnings", "confirmed"])
+        self.assertEqual(data["summary"]["confirmed"], sum(1 for a in mapped if a["confirmed"]))
+        self.assertLessEqual(data["summary"]["confirmed"], data["summary"]["mapped"])
 
 
 if __name__ == "__main__":

@@ -105,7 +105,7 @@ function render(){
   const s = data.summary;
   document.getElementById("stats").innerHTML = [
     [s.mapped, "agents mapped"], [s.unmapped, "repos not yet mapped"],
-    [data.maturity_levels.slice(Math.max(0, mindex("ready"))).reduce((n,l) => n + (s.by_maturity[l.key]||0), 0), "ready to reuse"],
+    [s.confirmed ?? 0, "confirmed by owners"],
     [s.open_slots, "open team slots"],
     [s.with_warnings, "with mandate issues"]
   ].map(([n,l]) => `<div class="stat"><b>${n}</b><span>${l}</span></div>`).join("");

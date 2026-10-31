@@ -240,6 +240,7 @@ def main():
             "by_maturity": {k: sum(1 for m in mapped if m.get("maturity") == k) for k in MATURITY},
             "by_island": {k: sum(1 for m in mapped if m.get("island") == k) for k in ISLANDS},
             "with_warnings": sum(1 for m in mapped if m["warnings"]),
+            "confirmed": sum(1 for m in mapped if m["confirmed"]),
         },
         "agents": sorted(agents.values(), key=lambda m: (m["status"] != "mapped", m["repo"].lower())),
     }
