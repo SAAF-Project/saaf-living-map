@@ -140,8 +140,8 @@ function card(a){
   const cls = ["card", ghost?"ghost":"", !matches(a)?"dim":"", rel?"hl":""].join(" ");
   const meta = ghost ? esc(a.repo) :
     [a.maturity && mlabel(a.maturity), a.category, a.language, a.open_slots>0 ? `${a.open_slots} open slot${a.open_slots>1?"s":""}` : null].filter(Boolean).map(esc).join(" · ");
-  const badges = (a.warnings?.length && !ghost ? `<span class="badge w">${a.warnings.length} issue${a.warnings.length>1?"s":""}</span>` : "") +
-    (!ghost && a.confirmed === false ? `<span class="badge s" title="Island and maturity not yet confirmed by the agent's owners">unconfirmed</span>` : "") + (ghost ? `<span class="badge s">not mapped</span>` : "");
+  const badges = (a.warnings?.length && !ghost ? `<span class="badge w" title="${esc(a.warnings.join("\n"))}">${a.warnings.length} issue${a.warnings.length>1?"s":""}</span>` : "") +
+    (!ghost && a.confirmed === false ? `<span class="badge s" title="Seed drafted from the portal; not yet confirmed by the repo owner">unconfirmed</span>` : "") + (ghost ? `<span class="badge s">not mapped</span>` : "");
   return `<button class="${cls}" data-repo="${esc(a.repo)}" style="border-left-color:${ghost?"var(--line)":mcolor(a.maturity)}">
     <div class="t">${esc(a.name)}${badges}</div><div class="meta">${meta}</div></button>`;
 }
