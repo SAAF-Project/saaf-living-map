@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-31T09:49:13+00:00",
+  "generated_at": "2026-10-31T10:03:35+00:00",
   "islands": [
     {
       "id": "foundation",
@@ -68,7 +68,8 @@
       "governance": 6,
       "quarry": 0
     },
-    "with_warnings": 18
+    "with_warnings": 18,
+    "confirmed": 0
   },
   "agents": [
     {
