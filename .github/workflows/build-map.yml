@@ -3,7 +3,7 @@ name: Build living map
 on:
   push:
     branches: [main]
-    paths: [repos.txt, "manifests/**", scripts/build_map.py]
+    paths: [repos.txt, "manifests/**", scripts/build_map.py, "tests/**"]
   schedule:
     - cron: "17 * * * *"   # hourly: picks up agent.yaml changes in the agent repos
   workflow_dispatch:
@@ -20,6 +20,7 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install pyyaml
+      - run: python -m unittest discover tests
       - run: python scripts/build_map.py
         env:
           GITHUB_TOKEN: ${{ secrets.SAAF_READ_TOKEN || secrets.GITHUB_TOKEN }}

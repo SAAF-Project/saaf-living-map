@@ -15,9 +15,24 @@ from pathlib import Path
 import yaml
 
 ROOT = Path(__file__).resolve().parent.parent
-ISLANDS = ["Planning", "Fieldwork", "Reporting", "AI Governance & QA",
-           "Monitoring", "Shared Infrastructure"]
-MATURITY = ["Draft workplan", "Building", "QA Assessment", "Ready"]
+# Island ids and maturity stage keys are the SAAF portal's own (agreed on
+# SAAF-Project/saaf-portal#7): manifests carry the id or key, labels may change on
+# the portal side without touching any manifest. Order follows the portal.
+ISLANDS = {
+    "foundation": "Shared Infrastructure",
+    "planning": "GIAS Audit Planning Pipeline",
+    "collection": "Evidence Collection & Extraction",
+    "reporting": "Reporting & Visualization",
+    "monitoring": "Compliance & Regulatory Assessment",
+    "governance": "AI Governance & Quality Assurance",
+    "quarry": "Not yet assigned to a track",
+}
+# The portal's draft-plan and final-plan stages belong to a plan, not a repo,
+# so a manifest never carries them.
+MATURITY = {"building": "Building", "ready": "Ready", "tested": "Tested",
+            "improving": "Improving"}
+PLAN_STAGES = ["draft-plan", "final-plan"]
+READY_ONWARD = ["ready", "tested", "improving"]
 REQUIRED = ["name", "repo", "island", "maturity", "description"]
 # Actions every mandate should forbid (the "agents gone rogue" baseline).
 BASELINE_FORBIDDEN = ["change_own_config"]
@@ -69,9 +84,11 @@ def check(m):
     """Return a list of human-readable warnings for one manifest."""
     w = [f"missing field: {f}" for f in REQUIRED if not m.get(f)]
     if m.get("island") and m["island"] not in ISLANDS:
-        w.append(f"unknown island: {m['island']}")
-    if m.get("maturity") and m["maturity"] not in MATURITY:
-        w.append(f"unknown maturity: {m['maturity']}")
+        w.append(f"unknown island: {m['island']} (use one of: {', '.join(ISLANDS)})")
+    if m.get("maturity") in PLAN_STAGES:
+        w.append(f"maturity {m['maturity']} is a plan stage; a repo starts at building")
+    elif m.get("maturity") and m["maturity"] not in MATURITY:
+        w.append(f"unknown maturity: {m['maturity']} (use one of: {', '.join(MATURITY)})")
     return w + check_mandate(m)
 
 
@@ -100,8 +117,8 @@ def check_mandate(m):
         w.append("mandate has no evidence policy")
     if not mandate.get("human_approval_required_for"):
         w.append("mandate has no human approval step")
-    if m.get("maturity") == "Ready" and not mandate.get("max_runtime_minutes"):
-        w.append("Ready agent without max_runtime_minutes")
+    if m.get("maturity") in READY_ONWARD and not mandate.get("max_runtime_minutes"):
+        w.append(f"{m['maturity']} agent without max_runtime_minutes")
     return w
 
 
@@ -167,8 +184,8 @@ def main():
     mapped = [m for m in agents.values() if m["status"] == "mapped"]
     out = {
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-        "islands": ISLANDS,
-        "maturity_levels": MATURITY,
+        "islands": [{"id": k, "label": v} for k, v in ISLANDS.items()],
+        "maturity_levels": [{"key": k, "label": v} for k, v in MATURITY.items()],
         "summary": {
             "agents": len(agents),
             "mapped": len(mapped),
