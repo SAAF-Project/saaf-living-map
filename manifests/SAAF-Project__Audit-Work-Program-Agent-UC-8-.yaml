@@ -1,7 +1,7 @@
 name: Work Program
 repo: SAAF-Project/Audit-Work-Program-Agent-UC-8-
-island: Planning
-maturity: Ready        # Draft workplan | Building | QA Assessment | Ready
+island: planning
+maturity: building        # building | ready | tested | improving
 category: Compliance
 language: Python
 depends_on:
