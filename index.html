@@ -141,7 +141,7 @@ function card(a){
   const meta = ghost ? esc(a.repo) :
     [a.maturity && mlabel(a.maturity), a.category, a.language, a.open_slots>0 ? `${a.open_slots} open slot${a.open_slots>1?"s":""}` : null].filter(Boolean).map(esc).join(" · ");
   const badges = (a.warnings?.length && !ghost ? `<span class="badge w">${a.warnings.length} issue${a.warnings.length>1?"s":""}</span>` : "") +
-    (a.source_kind === "seed" ? `<span class="badge s" title="Drafted from the portal; island and maturity unconfirmed">seed</span>` : "") + (ghost ? `<span class="badge s">not mapped</span>` : "");
+    (!ghost && a.confirmed === false ? `<span class="badge s" title="Island and maturity not yet confirmed by the agent's owners">unconfirmed</span>` : "") + (ghost ? `<span class="badge s">not mapped</span>` : "");
   return `<button class="${cls}" data-repo="${esc(a.repo)}" style="border-left-color:${ghost?"var(--line)":mcolor(a.maturity)}">
     <div class="t">${esc(a.name)}${badges}</div><div class="meta">${meta}</div></button>`;
 }
@@ -172,7 +172,8 @@ function showDetail(a){
       <dt>Category</dt><dd>${esc(a.category||"—")}</dd><dt>Language</dt><dd>${esc(a.language||"—")}</dd>
       <dt>Open slots</dt><dd>${esc(a.open_slots ?? 0)}</dd><dt>Tags</dt><dd>${pills(a.tags)}</dd>
       <dt>Depends on</dt><dd>${links(a.depends_on)}</dd><dt>Used by</dt><dd>${links(a.used_by)}</dd>
-      <dt>Source</dt><dd>${a.source_kind==="seed" ? "seed manifest in this repo, drafted from the portal; island and maturity unconfirmed" : "agent.yaml in agent repo"}</dd></dl>
+      <dt>Source</dt><dd>${a.source_kind==="seed" ? "seed manifest in this repo, drafted from the portal" : "agent.yaml in agent repo"}</dd>
+      <dt>Confirmed</dt><dd>${a.confirmed === false ? "no: island and maturity not yet confirmed by the owners" : "yes, by the owners"}</dd></dl>
     <h4>Mandate</h4>
     ${a.has_mandate ? `<p>Declared; all mandate checks pass.</p>`
       : noMandate ? `<p class="empty">No mandate declared.</p>`

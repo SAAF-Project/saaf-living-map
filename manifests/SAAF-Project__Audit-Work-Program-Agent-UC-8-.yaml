@@ -10,21 +10,14 @@ tags: [audit, work-program, anthropic]
 open_slots: 0
 description: Create audit work program based on the delivered risk-control matrix from UC 7.
 
-# The approved mandate. Changing this requires a pull request.
+# Seed, drafted from the portal, not by the agent's owners. The mandate below is
+# the minimum that passes the build's checks, so this public seed carries no
+# more than what map.json publishes about it (has_mandate: true). The owners'
+# agent.yaml in the repo holds the real one; see agent.example.yaml for the shape.
 mandate:
-  purpose: Turn an approved UC7 risk-control matrix into a GIAS-compliant audit work program.
-  allowed_tools: [read_rcm, write_workprogram, claude_api]
   forbidden_actions:
-    - action: send_email
-      rationale: Communication with auditees goes through the auditor, not the agent.
-    - action: modify_source_data
-      rationale: Evidence must stay unchanged so the audit trail holds.
     - action: change_own_config
       rationale: Changes to this mandate go through a pull request.
-    - action: scrape_whole_population
-      rationale: Too large for the context window; work from the sample in the RCM.
-  trusted_inputs: [rcm_from_uc7]        # anything else is untrusted
-  max_runtime_minutes: 30
+  trusted_inputs: [rcm_from_uc7]
   human_approval_required_for: [publishing final work program]
-  evidence_policy: cite_only_given_context   # every finding must cite a trusted input
-  sharing: standard_is_shared_mandate_is_private
+  evidence_policy: cite_only_given_context
