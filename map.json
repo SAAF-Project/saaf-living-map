@@ -1,18 +1,52 @@
 {
-  "generated_at": "2026-10-31T06:58:52+00:00",
+  "generated_at": "2026-10-31T08:07:40+00:00",
   "islands": [
-    "Planning",
-    "Fieldwork",
-    "Reporting",
-    "AI Governance & QA",
-    "Monitoring",
-    "Shared Infrastructure"
+    {
+      "id": "foundation",
+      "label": "Shared Infrastructure"
+    },
+    {
+      "id": "planning",
+      "label": "GIAS Audit Planning Pipeline"
+    },
+    {
+      "id": "collection",
+      "label": "Evidence Collection & Extraction"
+    },
+    {
+      "id": "reporting",
+      "label": "Reporting & Visualization"
+    },
+    {
+      "id": "monitoring",
+      "label": "Compliance & Regulatory Assessment"
+    },
+    {
+      "id": "governance",
+      "label": "AI Governance & Quality Assurance"
+    },
+    {
+      "id": "quarry",
+      "label": "Not yet assigned to a track"
+    }
   ],
   "maturity_levels": [
-    "Draft workplan",
-    "Building",
-    "QA Assessment",
-    "Ready"
+    {
+      "key": "building",
+      "label": "Building"
+    },
+    {
+      "key": "ready",
+      "label": "Ready"
+    },
+    {
+      "key": "tested",
+      "label": "Tested"
+    },
+    {
+      "key": "improving",
+      "label": "Improving"
+    }
   ],
   "summary": {
     "agents": 19,
@@ -20,18 +54,19 @@
     "unmapped": 0,
     "open_slots": 0,
     "by_maturity": {
-      "Draft workplan": 0,
-      "Building": 0,
-      "QA Assessment": 16,
-      "Ready": 3
+      "building": 1,
+      "ready": 18,
+      "tested": 0,
+      "improving": 0
     },
     "by_island": {
-      "Planning": 2,
-      "Fieldwork": 8,
-      "Reporting": 2,
-      "AI Governance & QA": 6,
-      "Monitoring": 1,
-      "Shared Infrastructure": 0
+      "foundation": 0,
+      "planning": 2,
+      "collection": 4,
+      "reporting": 3,
+      "monitoring": 4,
+      "governance": 6,
+      "quarry": 0
     },
     "with_warnings": 18
   },
@@ -39,8 +74,8 @@
     {
       "name": "Audit Criteria & Mandate Guard",
       "repo": "SAAF-Project/Audit-criteria",
-      "island": "AI Governance & QA",
-      "maturity": "QA Assessment",
+      "island": "governance",
+      "maturity": "ready",
       "category": "Risk & Controls",
       "language": "Python",
       "depends_on": [],
@@ -70,8 +105,8 @@
     {
       "name": "Work Program",
       "repo": "SAAF-Project/Audit-Work-Program-Agent-UC-8-",
-      "island": "Planning",
-      "maturity": "Ready",
+      "island": "planning",
+      "maturity": "building",
       "category": "Compliance",
       "language": "Python",
       "depends_on": [
@@ -94,8 +129,8 @@
     {
       "name": "Compliance Audit Agent",
       "repo": "SAAF-Project/Compliance-Audit-Agent",
-      "island": "Fieldwork",
-      "maturity": "QA Assessment",
+      "island": "collection",
+      "maturity": "ready",
       "category": "Compliance",
       "language": "Python",
       "depends_on": [],
@@ -123,8 +158,8 @@
     {
       "name": "Compliance Report Generator",
       "repo": "SAAF-Project/Compliance-Report-Generator",
-      "island": "Fieldwork",
-      "maturity": "QA Assessment",
+      "island": "monitoring",
+      "maturity": "ready",
       "category": "Compliance",
       "language": "Python",
       "depends_on": [],
@@ -154,8 +189,8 @@
     {
       "name": "CUEC Crosscheck",
       "repo": "SAAF-Project/CUEC_Crosscheck",
-      "island": "Fieldwork",
-      "maturity": "QA Assessment",
+      "island": "collection",
+      "maturity": "ready",
       "category": "Compliance",
       "language": "Python",
       "depends_on": [],
@@ -184,8 +219,8 @@
     {
       "name": "ExecGRC",
       "repo": "SAAF-Project/ExecGRC",
-      "island": "Reporting",
-      "maturity": "QA Assessment",
+      "island": "reporting",
+      "maturity": "ready",
       "category": "Audit Reporting",
       "language": "Python",
       "depends_on": [],
@@ -215,8 +250,8 @@
     {
       "name": "Executive Summary Writer",
       "repo": "SAAF-Project/Executive-Summary-Writer",
-      "island": "Reporting",
-      "maturity": "QA Assessment",
+      "island": "reporting",
+      "maturity": "ready",
       "category": "Audit Reporting",
       "language": "Python",
       "depends_on": [],
@@ -245,8 +280,8 @@
     {
       "name": "GDPR AI Audit",
       "repo": "SAAF-Project/GDPR-AI-Audit-Agent",
-      "island": "Fieldwork",
-      "maturity": "QA Assessment",
+      "island": "monitoring",
+      "maturity": "ready",
       "category": "Compliance",
       "language": "Python",
       "depends_on": [],
@@ -275,8 +310,8 @@
     {
       "name": "Hallucination Detection",
       "repo": "SAAF-Project/hallucination-detection-agent",
-      "island": "AI Governance & QA",
-      "maturity": "QA Assessment",
+      "island": "governance",
+      "maturity": "ready",
       "category": "Governance & Guardrails",
       "language": "Python",
       "depends_on": [],
@@ -306,8 +341,8 @@
     {
       "name": "Judging Found Controls",
       "repo": "SAAF-Project/judging-found-controls",
-      "island": "AI Governance & QA",
-      "maturity": "Ready",
+      "island": "governance",
+      "maturity": "ready",
       "category": "Risk & Controls",
       "language": "Python",
       "depends_on": [],
@@ -336,8 +371,8 @@
     {
       "name": "LLM OWASP Review",
       "repo": "SAAF-Project/llm_owasp",
-      "island": "AI Governance & QA",
-      "maturity": "QA Assessment",
+      "island": "governance",
+      "maturity": "ready",
       "category": "AI Security",
       "language": "Python",
       "depends_on": [],
@@ -366,8 +401,8 @@
     {
       "name": "OWASP Top 10 LLM Assessment",
       "repo": "SAAF-Project/OWASP-top-10-LLM-assessment",
-      "island": "AI Governance & QA",
-      "maturity": "QA Assessment",
+      "island": "governance",
+      "maturity": "ready",
       "category": "AI Assurance",
       "language": "Python",
       "depends_on": [],
@@ -396,8 +431,8 @@
     {
       "name": "RCM Builder (UC7)",
       "repo": "SAAF-Project/RCM-Builder",
-      "island": "Planning",
-      "maturity": "QA Assessment",
+      "island": "planning",
+      "maturity": "ready",
       "category": "Risk & Controls",
       "language": "Python",
       "depends_on": [],
@@ -428,8 +463,8 @@
     {
       "name": "SAAF Circuit Breaker",
       "repo": "SAAF-Project/SAAF-circuit-breaker",
-      "island": "AI Governance & QA",
-      "maturity": "QA Assessment",
+      "island": "governance",
+      "maturity": "ready",
       "category": "Governance & Guardrails",
       "language": "TypeScript/Python",
       "depends_on": [],
@@ -461,8 +496,8 @@
     {
       "name": "Three-Way Match Audit",
       "repo": "SAAF-Project/three-way-match-audit",
-      "island": "Fieldwork",
-      "maturity": "Ready",
+      "island": "reporting",
+      "maturity": "ready",
       "category": "Audit Reporting",
       "language": "Python",
       "depends_on": [],
@@ -491,8 +526,8 @@
     {
       "name": "IAM Access Review",
       "repo": "SAAF-Project/Track-2---IAM-final",
-      "island": "Fieldwork",
-      "maturity": "QA Assessment",
+      "island": "collection",
+      "maturity": "ready",
       "category": "AI Security",
       "language": "Python",
       "depends_on": [],
@@ -522,8 +557,8 @@
     {
       "name": "Evidence Collection & Extraction",
       "repo": "SAAF-Project/Track-2-Evidence-Collection-Extraction",
-      "island": "Fieldwork",
-      "maturity": "QA Assessment",
+      "island": "collection",
+      "maturity": "ready",
       "category": "Evidence",
       "language": "Python",
       "depends_on": [],
@@ -552,8 +587,8 @@
     {
       "name": "Vendor Guard",
       "repo": "SAAF-Project/Vendor_Guard",
-      "island": "Fieldwork",
-      "maturity": "QA Assessment",
+      "island": "monitoring",
+      "maturity": "ready",
       "category": "Compliance",
       "language": "Python",
       "depends_on": [],
@@ -583,8 +618,8 @@
     {
       "name": "What's The News",
       "repo": "SAAF-Project/WhatsTheNews",
-      "island": "Monitoring",
-      "maturity": "QA Assessment",
+      "island": "monitoring",
+      "maturity": "ready",
       "category": "Evidence",
       "language": "JavaScript",
       "depends_on": [],
