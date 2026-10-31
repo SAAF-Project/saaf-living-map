@@ -34,6 +34,12 @@ MATURITY = {"building": "Building", "ready": "Ready", "tested": "Tested",
 PLAN_STAGES = ["draft-plan", "final-plan"]
 READY_ONWARD = ["ready", "tested", "improving"]
 REQUIRED = ["name", "repo", "island", "maturity", "description"]
+# The only fields an agent entry in map.json may carry. map.json is public and
+# manifests may come from private repos, so anything else a manifest declares is
+# dropped (and named in the build log) rather than passed through.
+PUBLISHED = ["name", "repo", "island", "maturity", "category", "language", "description",
+             "tags", "depends_on", "used_by", "open_slots", "status", "source_kind", "source",
+             "warnings", "has_mandate", "confirmed", "review"]
 # Actions every mandate should forbid (the "agents gone rogue" baseline).
 BASELINE_FORBIDDEN = ["change_own_config"]
 
@@ -102,9 +108,10 @@ def check_mandate(m):
     allowed = set(as_list(mandate.get("allowed_tools")))
     fl = normalize_forbidden(mandate)
     forbidden = {f["action"] for f in fl}
+    # Warnings count rather than name mandate items: they are published in map.json.
     clash = allowed & forbidden
     if clash:
-        w.append("tools both allowed and forbidden: " + ", ".join(sorted(clash)))
+        w.append(f"{len(clash)} tool{'s' if len(clash) > 1 else ''} both allowed and forbidden")
     for f in BASELINE_FORBIDDEN:
         if f not in forbidden:
             w.append(f"mandate does not forbid {f}")
@@ -112,7 +119,7 @@ def check_mandate(m):
         w.append("mandate lists no trusted inputs")
     missing = [f["action"] for f in fl if not f["rationale"]]
     if missing:
-        w.append("forbidden actions without rationale: " + ", ".join(missing))
+        w.append(f"{len(missing)} forbidden action{'s' if len(missing) > 1 else ''} without rationale")
     if not mandate.get("evidence_policy"):
         w.append("mandate has no evidence policy")
     if not mandate.get("human_approval_required_for"):
@@ -120,6 +127,53 @@ def check_mandate(m):
     if m.get("maturity") in READY_ONWARD and not mandate.get("max_runtime_minutes"):
         w.append(f"{m['maturity']} agent without max_runtime_minutes")
     return w
+
+
+def confirmed(m, kind):
+    """The manifest's own `confirmed` if it is a boolean, else the default for its
+    source: a seed is drafted by someone other than the owners, an agent.yaml in
+    the repo is the owners' word."""
+    v = m.get("confirmed")
+    if isinstance(v, bool):
+        return v, None
+    default = kind == "repo"
+    if v is None:
+        return default, None
+    return default, f"confirmed must be true or false, not {v!r}"
+
+
+def entry(repo, text, src, kind):
+    """Build the map entry for one manifest text (not yet filtered: see publish)."""
+    try:
+        m = yaml.safe_load(text) or {}
+    except yaml.YAMLError as e:
+        return {"repo": repo, "name": repo.split("/")[-1], "status": "invalid",
+                "source": src, "has_mandate": False, "confirmed": False,
+                "warnings": [f"YAML error: {e}"]}
+    if not isinstance(m, dict):
+        return {"repo": repo, "name": repo.split("/")[-1], "status": "invalid",
+                "source": src, "has_mandate": False, "confirmed": False,
+                "warnings": ["manifest is not a mapping"]}
+    m["repo"] = m.get("repo") or repo
+    m["depends_on"] = as_list(m.get("depends_on"))
+    m["tags"] = as_list(m.get("tags"))
+    m["status"] = "mapped"
+    m["source_kind"] = kind
+    m["source"] = src
+    m["warnings"] = check(m)
+    m["confirmed"], bad = confirmed(m, kind)
+    if bad:
+        m["warnings"].append(bad)
+    # Publish only whether a clean mandate exists, never the block itself.
+    m["has_mandate"] = isinstance(m.get("mandate"), dict) and not check_mandate(m)
+    m.pop("mandate", None)
+    return m
+
+
+def publish(m):
+    """Keep only the allowlisted fields. Returns (entry, dropped key names)."""
+    dropped = sorted(k for k in m if k not in PUBLISHED)
+    return {k: m[k] for k in PUBLISHED if k in m}, dropped
 
 
 def main():
@@ -141,37 +195,27 @@ def main():
             kind = "seed"
         if text is None:
             agents[repo] = {"repo": repo, "name": repo.split("/")[-1], "status": "unmapped",
-                            "has_mandate": False,
+                            "has_mandate": False, "confirmed": False,
                             "warnings": ["no agent.yaml in repo and no seed manifest"]}
             print(f"  - {repo}: unmapped")
             continue
-        try:
-            m = yaml.safe_load(text) or {}
-        except yaml.YAMLError as e:
-            agents[repo] = {"repo": repo, "name": repo.split("/")[-1], "status": "invalid",
-                            "source": src, "has_mandate": False, "warnings": [f"YAML error: {e}"]}
-            print(f"  x {repo}: invalid YAML")
+        m = entry(repo, text, src, kind)
+        if m["status"] == "invalid":
+            agents[repo] = m
+            print(f"  x {repo}: invalid manifest")
             continue
-        m["repo"] = m.get("repo") or repo
-        m["depends_on"] = as_list(m.get("depends_on"))
-        m["tags"] = as_list(m.get("tags"))
-        m["status"] = "mapped"
-        m["source_kind"] = kind
-        m["source"] = src
-        m["warnings"] = check(m)
-        # map.json is public but manifests may come from private repos:
-        # publish only whether a clean mandate exists, never the block itself.
-        m["has_mandate"] = isinstance(m.get("mandate"), dict) and not check_mandate(m)
-        m.pop("mandate", None)
+        m, dropped = publish(m)
         agents[repo] = m
         print(f"  + {repo}: {kind} ({len(m['warnings'])} warnings)")
+        if dropped:
+            print(f"  ~ {repo}: dropped keys not in the allowlist: {', '.join(dropped)}")
 
     # Dependencies pointing at repos we don't track become ghost nodes.
     for m in list(agents.values()):
         for d in m.get("depends_on", []):
             if d not in agents:
                 agents[d] = {"repo": d, "name": d.split("/")[-1], "status": "unmapped",
-                             "has_mandate": False,
+                             "has_mandate": False, "confirmed": False,
                              "warnings": ["referenced as a dependency but not in repos.txt"]}
 
     # Reverse edges: who uses me.
@@ -181,6 +225,8 @@ def main():
         for d in m.get("depends_on", []):
             agents[d]["used_by"].append(m["repo"])
 
+    # Every entry, whatever its status, goes through the same allowlist.
+    agents = {r: publish(m)[0] for r, m in agents.items()}
     mapped = [m for m in agents.values() if m["status"] == "mapped"]
     out = {
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),

@@ -9,6 +9,9 @@ depends_on:
 tags: [audit, work-program, anthropic]
 open_slots: 0
 description: Create audit work program based on the delivered risk-control matrix from UC 7.
+# true when the owners have confirmed island and maturity. Defaults to true for an
+# agent.yaml in the agent repo and to false for a seed manifest in manifests/.
+confirmed: true
 
 # The approved mandate. Changing this requires a pull request.
 # The build checks it but never publishes it: map.json only carries
