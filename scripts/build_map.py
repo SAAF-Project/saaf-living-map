@@ -229,6 +229,7 @@ def main():
     agents = {r: publish(m)[0] for r, m in agents.items()}
     mapped = [m for m in agents.values() if m["status"] == "mapped"]
     out = {
+        "schema_version": 1,
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "islands": [{"id": k, "label": v} for k, v in ISLANDS.items()],
         "maturity_levels": [{"key": k, "label": v} for k, v in MATURITY.items()],

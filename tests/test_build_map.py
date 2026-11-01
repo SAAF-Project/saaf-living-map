@@ -146,6 +146,16 @@ class Build(unittest.TestCase):
         self.assertEqual(data["summary"]["confirmed"], sum(1 for a in mapped if a["confirmed"]))
         self.assertLessEqual(data["summary"]["confirmed"], data["summary"]["mapped"])
 
+    def test_schema_version_is_1_and_first(self):
+        with tempfile.TemporaryDirectory() as d:
+            out = Path(d) / "map.json"
+            subprocess.run([sys.executable, str(ROOT / "scripts" / "build_map.py"),
+                            "--offline", "--out", str(out)], check=True, capture_output=True)
+            data = json.loads(out.read_text("utf-8"))
+        self.assertIs(type(data["schema_version"]), int)
+        self.assertEqual(data["schema_version"], 1)
+        self.assertEqual(list(data)[0], "schema_version")
+
 
 if __name__ == "__main__":
     unittest.main()
