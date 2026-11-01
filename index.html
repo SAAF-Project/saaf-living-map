@@ -4,22 +4,33 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SAAF Living Map</title>
+<script>try{var t=localStorage.getItem("theme");if(t!=="light"&&t!=="dark"){t=window.matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"}document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
 <style>
+/* Palettes are the SAAF portal's (saaf-portal src/app/globals.css): dark is the default,
+   light is set via data-theme="light" on <html>, chosen the same way as the portal. */
 :root{
-  --bg:#f6f5f1;--panel:#ffffff;--ink:#1d1f23;--muted:#6b6f76;--line:#e3e1da;
-  --accent:#0f6b5c;--warn:#b5560b;--warn-bg:#fdf1e6;
-  --m0:#9aa0a6;--m1:#d08a1e;--m2:#3a78c4;--m3:#1f8a5b;
-  --ghost:#f0eee8;
+  color-scheme:dark;
+  --bg:#020617;--panel:#0F172A;--ink:#E2E8F0;--muted:#94A3B8;--line:#1E293B;
+  --accent:#818CF8;--button:#4F46E5;--warn:#FB923C;--warn-bg:rgba(251,146,60,.12);
+  --m0:#FBBF24;--m1:#818CF8;--m2:#4ADE80;--m3:#C084FC;
+  --ghost:rgba(255,255,255,.03);
 }
-@media (prefers-color-scheme:dark){:root{
-  --bg:#15171a;--panel:#1e2125;--ink:#eceae4;--muted:#9a9ea5;--line:#30343a;
-  --accent:#4cc3a8;--warn:#f0a35c;--warn-bg:#3a2717;
-  --m0:#80868d;--m1:#e0a040;--m2:#6aa2e8;--m3:#4cc38a;--ghost:#24272b;
-}}
+[data-theme="light"]{
+  color-scheme:light;
+  --bg:#F8FAFC;--panel:#FFFFFF;--ink:#0F172A;--muted:#64748B;--line:#E2E8F0;
+  --accent:#4F46E5;--button:#4F46E5;--warn:#EA580C;--warn-bg:#FFF7ED;
+  --m0:#B45309;--m1:#4F46E5;--m2:#16A34A;--m3:#9333EA;
+  --ghost:rgba(15,23,42,.03);
+}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 Inter,ui-sans-serif,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
 header{padding:28px 24px 8px;max-width:1280px;margin:auto}
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
 h1{margin:0;font-size:26px;letter-spacing:-.01em}
+.theme{width:32px;height:32px;flex:none;border:0;border-radius:8px;background:none;color:var(--muted);font-size:16px;cursor:pointer}
+.theme:hover{color:var(--ink);background:var(--ghost)}
 .sub{color:var(--muted);margin:4px 0 0}
 main{max-width:1280px;margin:auto;padding:8px 24px 48px}
 .stats{display:flex;flex-wrap:wrap;gap:12px;margin:18px 0}
@@ -33,7 +44,7 @@ main{max-width:1280px;margin:auto;padding:8px 24px 48px}
 .controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:18px 0 14px}
 .controls input{flex:1 1 220px;padding:8px 12px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font:inherit}
 .chip{border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:999px;padding:6px 12px;font:inherit;font-size:13px;cursor:pointer}
-.chip[aria-pressed=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip[aria-pressed=true]{background:var(--button);color:#fff;border-color:var(--button)}
 .islands{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
 .island{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;min-height:120px}
 .island h2{font-size:15px;margin:0 0 10px;display:flex;justify-content:space-between}
@@ -69,7 +80,7 @@ a{color:var(--accent)}
 </head>
 <body>
 <header>
-  <h1>SAAF Living Map</h1>
+  <div class="top"><h1>SAAF Living Map</h1><button class="theme" id="theme" type="button"></button></div>
   <p class="sub">Every SAAF audit agent, built from the <code>agent.yaml</code> in its repo. Updates when a repo changes.</p>
 </header>
 <main>
@@ -197,6 +208,21 @@ document.addEventListener("click", e => {
 });
 document.addEventListener("keydown", e => { if (e.key==="Escape"){ document.getElementById("detail").classList.remove("open"); selected=null; drawIslands(); }});
 document.getElementById("q").addEventListener("input", e => { filter.q = e.target.value.trim().toLowerCase(); drawIslands(); });
+
+// Theme toggle, as in the portal: flips data-theme and remembers the choice.
+const themeBtn = document.getElementById("theme");
+function drawTheme(){
+  const light = document.documentElement.getAttribute("data-theme") === "light";
+  const label = light ? "Switch to dark mode" : "Switch to light mode";
+  themeBtn.textContent = light ? "☾" : "☀"; themeBtn.title = label; themeBtn.setAttribute("aria-label", label);
+}
+themeBtn.addEventListener("click", () => {
+  const next = document.documentElement.getAttribute("data-theme") === "light" ? "dark" : "light";
+  document.documentElement.setAttribute("data-theme", next);
+  try { localStorage.setItem("theme", next); } catch {}
+  drawTheme();
+});
+drawTheme();
 </script>
 </body>
 </html>
