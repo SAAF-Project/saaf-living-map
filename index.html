@@ -49,6 +49,9 @@ main{max-width:1280px;margin:auto;padding:8px 24px 48px}
 .island{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;min-height:120px}
 .island h2{font-size:15px;margin:0 0 10px;display:flex;justify-content:space-between}
 .island h2 small{color:var(--muted);font-weight:400}
+.island h2 a{color:inherit;text-decoration:none}
+.island h2 a:hover,.island h2 a:focus-visible{text-decoration:underline}
+.island.target{outline:2px solid var(--accent);outline-offset:1px}
 .empty{color:var(--muted);font-size:13px;font-style:italic}
 .card{display:block;width:100%;text-align:left;border:1px solid var(--line);border-left:4px solid var(--m0);background:var(--bg);color:var(--ink);border-radius:8px;padding:9px 11px;margin-bottom:8px;cursor:pointer;font:inherit}
 .card:hover,.card:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
@@ -95,15 +98,17 @@ a{color:var(--accent)}
   <footer id="foot"></footer>
 </main>
 <aside id="detail" aria-live="polite"></aside>
+<script src="hash.js"></script>
 <script>
 const MCOL = ["var(--m0)","var(--m1)","var(--m2)","var(--m3)"];
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-let data, filter = {q:"", maturity:null, issues:false, slots:false}, selected = null;
+let data, filter = {q:"", maturity:null, issues:false, slots:false}, selected = null, targetIsland = null;
+const {parseHash, formatHash} = LivingMapHash;
 
 // Islands and maturity levels are {id|key, label}; plain strings are the older map.json shape.
 const norm = (xs, k) => (xs||[]).map(x => typeof x === "string" ? {[k]:x, label:x} : x);
 fetch("map.json", {cache:"no-store"}).then(r => r.json()).then(d => {
-  data = d; data.islands = norm(d.islands, "id"); data.maturity_levels = norm(d.maturity_levels, "key"); render(); })
+  data = d; data.islands = norm(d.islands, "id"); data.maturity_levels = norm(d.maturity_levels, "key"); render(); applyHash(); })
   .catch(e => document.getElementById("islands").innerHTML = `<p class="empty">Could not load map.json (${esc(e)}).</p>`);
 
 function mindex(m){ return data.maturity_levels.findIndex(l => l.key === m); }
@@ -111,6 +116,7 @@ function mcolor(m){ const i = mindex(m); return i < 0 ? "var(--m0)" : MCOL[i]; }
 function mlabel(m){ return data.maturity_levels[mindex(m)]?.label ?? m; }
 function ilabel(i){ return data.islands.find(l => l.id === i)?.label ?? i; }
 function byRepo(r){ return data.agents.find(a => a.repo === r); }
+function byRepoLoose(r){ const k = String(r).toLowerCase(); return byRepo(r) || data.agents.find(a => a.repo.toLowerCase() === k); }
 
 function render(){
   const s = data.summary;
@@ -158,13 +164,14 @@ function card(a){
 }
 
 function drawIslands(){
-  const groups = data.islands.map(i => [i.label, data.agents.filter(a => a.status==="mapped" && a.island===i.id)]);
+  const groups = data.islands.map(i => [i.id, i.label, data.agents.filter(a => a.status==="mapped" && a.island===i.id)]);
   const other = data.agents.filter(a => a.status==="mapped" && !data.islands.some(i => i.id===a.island));
-  if (other.length) groups.push(["Other", other]);
+  if (other.length) groups.push([null, "Other", other]);
   const ghosts = data.agents.filter(a => a.status!=="mapped");
-  if (ghosts.length) groups.push(["Not yet mapped", ghosts]);
-  document.getElementById("islands").innerHTML = groups.map(([name, list]) =>
-    `<div class="island"><h2>${esc(name)}<small>${list.length}</small></h2>${
+  if (ghosts.length) groups.push([null, "Not yet mapped", ghosts]);
+  document.getElementById("islands").innerHTML = groups.map(([id, name, list]) =>
+    `<div class="island${id && id===targetIsland ? " target" : ""}"${id ? ` id="island-${esc(id)}"` : ""}><h2>${
+      id ? `<a href="${esc(formatHash({island:id}))}">${esc(name)}</a>` : esc(name)}<small>${list.length}</small></h2>${
       list.length ? list.map(card).join("") : `<p class="empty">No agents yet — a gap worth a hackathon track.</p>`}</div>`).join("");
 }
 
@@ -195,10 +202,38 @@ function showDetail(a){
   d.classList.add("open");
 }
 
+function closeDetail(){ document.getElementById("detail").classList.remove("open"); selected = null; drawIslands(); }
+
+// Deep links. The hash is the source of truth: clicks write it (replaceState, so the
+// back button still leaves the page), applyHash() reads it on load and whenever it changes.
+// The hash is visitor-controlled: it is only ever used to look up an island or agent in
+// map.json, and an unknown value does nothing. Only the looked-up ids reach the DOM.
+function setHash(h){
+  if (location.hash === h || (!h && !location.hash)) return;
+  history.replaceState(null, "", location.pathname + location.search + h);
+  applyHash();
+}
+function applyHash(){
+  if (!data) return;
+  const t = parseHash(location.hash);
+  const a = t.agent ? byRepoLoose(t.agent) : null;
+  const island = t.island ? data.islands.find(i => i.id === t.island) : null;
+  targetIsland = island ? island.id : null;
+  if (a) showDetail(a); else closeDetail();
+  const el = a ? document.querySelector(`.card[data-repo="${CSS.escape(a.repo)}"]`)
+           : island ? document.getElementById(`island-${island.id}`) : null;
+  if (!el) return;
+  const r = el.getBoundingClientRect();
+  if (r.top < 0 || r.bottom > window.innerHeight) el.scrollIntoView({block: a ? "center" : "start"});
+}
+window.addEventListener("hashchange", applyHash);
+
 document.addEventListener("click", e => {
   const c = e.target.closest("[data-repo]");
-  if (c){ const a = byRepo(c.dataset.repo); if (a) showDetail(a); return; }
-  if (e.target.closest(".close")){ document.getElementById("detail").classList.remove("open"); selected=null; drawIslands(); return; }
+  if (c){ const a = byRepo(c.dataset.repo); if (a) setHash(formatHash({agent: a.repo})); return; }
+  if (e.target.closest(".close")){ setHash(""); return; }
+  const il = e.target.closest(".island h2 a");
+  if (il){ e.preventDefault(); setHash(il.getAttribute("href")); return; }
   const chip = e.target.closest(".chip");
   if (chip){
     if (chip.dataset.m) filter.maturity = filter.maturity===chip.dataset.m ? null : chip.dataset.m;
@@ -206,7 +241,7 @@ document.addEventListener("click", e => {
     render();
   }
 });
-document.addEventListener("keydown", e => { if (e.key==="Escape"){ document.getElementById("detail").classList.remove("open"); selected=null; drawIslands(); }});
+document.addEventListener("keydown", e => { if (e.key==="Escape" && selected) setHash(""); });
 document.getElementById("q").addEventListener("input", e => { filter.q = e.target.value.trim().toLowerCase(); drawIslands(); });
 
 // Theme toggle, as in the portal: flips data-theme and remembers the choice.
