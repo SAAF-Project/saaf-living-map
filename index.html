@@ -137,7 +137,7 @@ function render(){
     ` <button class="chip" data-f="issues" aria-pressed="${filter.issues}">Warnings</button>`;
   drawIslands();
   document.getElementById("foot").innerHTML =
-    `Generated ${esc(new Date(data.generated_at).toLocaleString())}. Add your agent: put an <code>agent.yaml</code> in its repo and add the repo to <code>repos.txt</code>.`;
+    `Last changed ${esc(new Date(data.generated_at).toLocaleString())}. Add your agent: put an <code>agent.yaml</code> in its repo and add the repo to <code>repos.txt</code>.`;
 }
 
 function matches(a){

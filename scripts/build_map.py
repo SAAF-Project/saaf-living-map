@@ -176,6 +176,25 @@ def publish(m):
     return {k: m[k] for k in PUBLISHED if k in m}, dropped
 
 
+def render(out):
+    return json.dumps(out, indent=2, ensure_ascii=False) + "\n"
+
+
+def keep_generated_at(out, path):
+    """If the map at path is identical to out apart from generated_at, reuse its
+    generated_at, so the file comes out byte-for-byte unchanged and the workflow
+    makes no commit. generated_at then means when the content last changed."""
+    try:
+        old_text = Path(path).read_text("utf-8")
+        old = json.loads(old_text)
+    except (OSError, ValueError):
+        return out
+    if not isinstance(old, dict) or not isinstance(old.get("generated_at"), str):
+        return out
+    candidate = out | {"generated_at": old["generated_at"]}
+    return candidate if render(candidate) == old_text else out
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--repos", default=str(ROOT / "repos.txt"))
@@ -245,7 +264,8 @@ def main():
         },
         "agents": sorted(agents.values(), key=lambda m: (m["status"] != "mapped", m["repo"].lower())),
     }
-    Path(a.out).write_text(json.dumps(out, indent=2, ensure_ascii=False) + "\n", "utf-8")
+    out = keep_generated_at(out, a.out)
+    Path(a.out).write_text(render(out), "utf-8")
     print(f"wrote {a.out}: {out['summary']}")
 
 

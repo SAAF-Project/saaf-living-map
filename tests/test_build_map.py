@@ -1,6 +1,7 @@
 """Tests for scripts/build_map.py. Run: python -m unittest discover tests"""
-import json, subprocess, sys, tempfile, unittest
+import contextlib, io, json, subprocess, sys, tempfile, unittest
 from pathlib import Path
+from unittest import mock
 
 import yaml
 
@@ -155,6 +156,66 @@ class Build(unittest.TestCase):
         self.assertIs(type(data["schema_version"]), int)
         self.assertEqual(data["schema_version"], 1)
         self.assertEqual(list(data)[0], "schema_version")
+
+
+OLD = "2000-01-01T00:00:00+00:00"
+
+
+def build_offline(out, fetch_seed=build_map.fetch_seed):
+    """Run build_map.main() in-process, offline, writing to out."""
+    argv = ["build_map.py", "--offline", "--out", str(out)]
+    with mock.patch.object(sys, "argv", argv), mock.patch.object(build_map, "fetch_seed", fetch_seed), \
+            contextlib.redirect_stdout(io.StringIO()):
+        build_map.main()
+    return out.read_text("utf-8")
+
+
+def backdate(out):
+    """Rewrite out with an old generated_at, so a fresh timestamp is easy to spot."""
+    data = json.loads(out.read_text("utf-8"))
+    data["generated_at"] = OLD
+    out.write_text(build_map.render(data), "utf-8")
+    return out.read_text("utf-8")
+
+
+class GeneratedAt(unittest.TestCase):
+    def test_same_inputs_keep_generated_at_and_file(self):
+        with tempfile.TemporaryDirectory() as d:
+            out = Path(d) / "map.json"
+            build_offline(out)
+            before = backdate(out)
+            after = build_offline(out)
+        self.assertEqual(json.loads(after)["generated_at"], OLD)
+        self.assertEqual(after, before)
+
+    def test_real_change_updates_generated_at(self):
+        repo = "SAAF-Project/Audit-Work-Program-Agent-UC-8-"
+        original = build_map.fetch_seed
+
+        def changed_seed(r):
+            text, src = original(r)
+            if r == repo:
+                text = text.replace("maturity: building", "maturity: ready", 1)
+            return text, src
+
+        self.assertIn("maturity: building", seed(repo)[0])
+        with tempfile.TemporaryDirectory() as d:
+            out = Path(d) / "map.json"
+            build_offline(out)
+            before = backdate(out)
+            after = build_offline(out, fetch_seed=changed_seed)
+        data = json.loads(after)
+        self.assertNotEqual(data["generated_at"], OLD)
+        self.assertNotEqual(after, before)
+        self.assertEqual(next(a for a in data["agents"] if a["repo"] == repo)["maturity"], "ready")
+
+    def test_unreadable_existing_file_gets_a_fresh_timestamp(self):
+        with tempfile.TemporaryDirectory() as d:
+            out = Path(d) / "map.json"
+            out.write_text("not json", "utf-8")
+            data = json.loads(build_offline(out))
+        self.assertNotEqual(data["generated_at"], OLD)
+        self.assertIn("T", data["generated_at"])
 
 
 if __name__ == "__main__":
