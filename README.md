@@ -16,3 +16,33 @@
 3. `index.html` renders `map.json` as the island map and an overview. The page accepts deep links, `#island=<id>` and `#agent=<owner/repo>`, and the address bar follows the open agent, so any view can be shared. `.nojekyll` tells GitHub Pages to serve these files as they are, without a Jekyll build.
 
 See also: the mandate guard ([SAAF-Project/Audit-criteria PR #1](https://github.com/SAAF-Project/Audit-criteria/pull/1)) reads the same mandate block but checks different fields: output invariants and approval gates. Aligning the two sets of fields is still open.
+
+## Prerequisites
+
+- Python 3 with `pyyaml` (the workflow uses Python 3.12: `.github/workflows/build-map.yml`). TODO(owner): state the minimum Python version.
+- Node.js, only for the deep-link tests in `tests/test_hash.js`. `tests/test_deeplink.py` runs them under `python -m unittest` when `node` is available.
+- Optional `GITHUB_TOKEN` environment variable. `scripts/build_map.py` sends it when fetching `agent.yaml` from the agent repos, which private repos need. Without it, only public repos and seed manifests are read. Use `--offline` to build from the seed manifests only. In CI the token comes from the `SAAF_READ_TOKEN` secret, or else the workflow's `GITHUB_TOKEN`. Never commit a token. Keep it in your environment or in a `.env` file, which is gitignored.
+
+## Limitations & human review
+
+The README above already states these limits. They are repeated here in one place:
+
+- Island, maturity and dependencies are **self-reported** in each repo's `agent.yaml`. The map does not check who added the file or whether the stated maturity is true.
+- Seed manifests in `manifests/` were drafted from the portal and are shown as unconfirmed until the repo carries its own `agent.yaml`.
+- The `mandate` block is checked, but only `has_mandate` is published. A `true` value means the block passes the build's checks. It does not mean the agent behaves within its mandate.
+- The map is rebuilt hourly, but GitHub can delay scheduled runs, so the map can lag behind the repos.
+- No AI model is called. The map is built by deterministic code.
+
+Treat the map as an overview for finding and planning work, not as evidence of an agent's quality. TODO(owner): confirm or add limitations.
+
+## Observability
+
+- `scripts/build_map.py` prints one line per repo to the build log: `+` mapped, `-` unmapped, `x` invalid manifest, `~` keys dropped by the allowlist. Fetch errors go to stderr. The log is visible in the GitHub Actions run of `build-map.yml`.
+- `map.json` records `generated_at`, a summary, and per-agent `source`, `source_kind` and `warnings`. Its git history shows each change, because the workflow commits it only when it changes.
+- Not recorded: who changed an agent's `agent.yaml` (that history lives in the agent repo), or a separate log of failed builds beyond GitHub Actions run history. TODO(owner): confirm Actions log retention.
+
+## License & contact
+
+- Code: MIT, see [`LICENSE`](LICENSE) (copyright TonyBarratt100). TODO(owner): confirm that this licence is agreed with Stichting SAAF, which has not yet decided an organisation-wide licence.
+- Maintainer: TODO(owner): name the maintainer(s) and a contact channel. The commit history shows TonyBarratt100 as the author.
+- Plan: no plan for the Living Map was found in `SAAF-Project/plans/`. TODO(owner): link one if it exists.
