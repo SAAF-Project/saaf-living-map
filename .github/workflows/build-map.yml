@@ -2,7 +2,8 @@ name: Build living map
 
 on:
   pull_request:
-    paths: [repos.txt, "manifests/**", "scripts/**", "tests/**", agent.example.yaml, .github/workflows/build-map.yml]
+    paths: [repos.txt, "manifests/**", "scripts/**", "tests/**", agent.example.yaml, .github/workflows/build-map.yml,
+            app.js, index.html, theme-init.js, hash.js]
   push:
     branches: [main]
     paths: [repos.txt, "manifests/**", scripts/build_map.py, "tests/**"]

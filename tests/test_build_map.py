@@ -158,6 +158,40 @@ class Build(unittest.TestCase):
         self.assertEqual(list(data)[0], "schema_version")
 
 
+class OpenSlots(unittest.TestCase):
+    def test_whole_numbers_pass_through(self):
+        for v in (0, 3):
+            e = build_map.entry("SAAF-Project/X", yaml.safe_dump(example() | {"open_slots": v}), "m.yaml", "seed")
+            self.assertEqual(e["open_slots"], v)
+            self.assertFalse([w for w in e["warnings"] if "open_slots" in w], e["warnings"])
+
+    def test_anything_else_is_zero_and_flagged(self):
+        for v in ("lots", "3", 2.5, True, [1], {"n": 1}):
+            e = build_map.entry("SAAF-Project/X", yaml.safe_dump(example() | {"open_slots": v}), "m.yaml", "seed")
+            self.assertEqual(e["open_slots"], 0, v)
+            self.assertIn(f"open_slots must be a whole number, not {v!r}", e["warnings"])
+
+    def test_build_completes_with_open_slots_lots(self):
+        repo = "SAAF-Project/Audit-Work-Program-Agent-UC-8-"
+        original = build_map.fetch_seed
+
+        def lots(r):
+            text, src = original(r)
+            if r == repo:
+                text = text.replace("open_slots: 0", 'open_slots: "lots"', 1)
+            return text, src
+
+        self.assertIn("open_slots: 0", seed(repo)[0])
+        with tempfile.TemporaryDirectory() as d:
+            data = json.loads(build_offline(Path(d) / "map.json", fetch_seed=lots))
+        a = next(a for a in data["agents"] if a["repo"] == repo)
+        self.assertEqual(a["open_slots"], 0)
+        self.assertIn("open_slots must be a whole number, not 'lots'", a["warnings"])
+        self.assertGreater(len(data["agents"]), 1)
+        mapped = [a for a in data["agents"] if a["status"] == "mapped"]
+        self.assertEqual(data["summary"]["open_slots"], sum(a.get("open_slots") or 0 for a in mapped))
+
+
 OLD = "2000-01-01T00:00:00+00:00"
 
 
