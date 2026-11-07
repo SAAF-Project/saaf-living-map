@@ -19,7 +19,7 @@ See also: the mandate guard ([SAAF-Project/Audit-criteria PR #1](https://github.
 
 ## Prerequisites
 
-- Python 3 with `pyyaml` (the workflow uses Python 3.12: `.github/workflows/build-map.yml`). TODO(owner): state the minimum Python version.
+- Python 3 with `pyyaml` (the workflow uses Python 3.12: `.github/workflows/build-map.yml`). The code needs at least Python 3.7 (checked with vermin); a currently supported Python version is recommended.
 - Node.js, only for the deep-link tests in `tests/test_hash.js`. `tests/test_deeplink.py` runs them under `python -m unittest` when `node` is available.
 - Optional `GITHUB_TOKEN` environment variable. `scripts/build_map.py` sends it when fetching `agent.yaml` from the agent repos, which private repos need. Without it, only public repos and seed manifests are read. Use `--offline` to build from the seed manifests only. In CI the token comes from the `SAAF_READ_TOKEN` secret, or else the workflow's `GITHUB_TOKEN`. Never commit a token. Keep it in your environment or in a `.env` file, which is gitignored.
 
@@ -33,16 +33,16 @@ The README above already states these limits. They are repeated here in one plac
 - The map is rebuilt hourly, but GitHub can delay scheduled runs, so the map can lag behind the repos.
 - No AI model is called. The map is built by deterministic code.
 
-Treat the map as an overview for finding and planning work, not as evidence of an agent's quality. TODO(owner): confirm or add limitations.
+Treat the map as an overview for finding and planning work, not as evidence of an agent's quality.
 
 ## Observability
 
 - `scripts/build_map.py` prints one line per repo to the build log: `+` mapped, `-` unmapped, `x` invalid manifest, `~` keys dropped by the allowlist. Fetch errors go to stderr. The log is visible in the GitHub Actions run of `build-map.yml`.
 - `map.json` records `generated_at`, a summary, and per-agent `source`, `source_kind` and `warnings`. Its git history shows each change, because the workflow commits it only when it changes.
-- Not recorded: who changed an agent's `agent.yaml` (that history lives in the agent repo), or a separate log of failed builds beyond GitHub Actions run history. TODO(owner): confirm Actions log retention.
+- Not recorded: who changed an agent's `agent.yaml` (that history lives in the agent repo), or a separate log of failed builds beyond GitHub Actions run history, which is kept according to the SAAF organisation's retention setting (GitHub's default is 90 days).
 
 ## License & contact
 
 - Code: MIT, see [`LICENSE`](LICENSE) (copyright TonyBarratt100). TODO(owner): confirm that this licence is agreed with Stichting SAAF, which has not yet decided an organisation-wide licence.
-- Maintainer: TODO(owner): name the maintainer(s) and a contact channel. The commit history shows TonyBarratt100 as the author.
-- Plan: no plan for the Living Map was found in `SAAF-Project/plans/`. TODO(owner): link one if it exists.
+- Maintainer: TonyBarratt100. Contact: open an issue on this repo.
+- Plan: none. The Living Map is shared infrastructure for all agents, not an agent with its own plan.
