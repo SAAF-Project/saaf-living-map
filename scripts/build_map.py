@@ -142,6 +142,15 @@ def confirmed(m, kind):
     return default, f"confirmed must be true or false, not {v!r}"
 
 
+def open_slots(m):
+    """The manifest's open_slots if it is a whole number (or absent), else 0 with a
+    warning, so one bad manifest cannot stop the build."""
+    v = m.get("open_slots")
+    if v is None or (isinstance(v, int) and not isinstance(v, bool)):
+        return v, None
+    return 0, f"open_slots must be a whole number, not {v!r}"
+
+
 def entry(repo, text, src, kind):
     """Build the map entry for one manifest text (not yet filtered: see publish)."""
     try:
@@ -164,6 +173,10 @@ def entry(repo, text, src, kind):
     m["confirmed"], bad = confirmed(m, kind)
     if bad:
         m["warnings"].append(bad)
+    if "open_slots" in m:
+        m["open_slots"], bad = open_slots(m)
+        if bad:
+            m["warnings"].append(bad)
     # Publish only whether a clean mandate exists, never the block itself.
     m["has_mandate"] = isinstance(m.get("mandate"), dict) and not check_mandate(m)
     m.pop("mandate", None)
