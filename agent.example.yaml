@@ -9,6 +9,12 @@ depends_on:
 tags: [audit, work-program, anthropic]
 open_slots: 0
 description: Create audit work program based on the delivered risk-control matrix from UC 7.
+# Proposed, not read by the build yet: the plan this repo implements (its slug in
+# SAAF-Project's plans/) and who answers for this agent and its mandate (GitHub
+# usernames). Uncomment to try them; the map ignores them for now, and owners will
+# never be published in map.json.
+# plan: audit-work-program
+# owners: [your-github-username]
 # true when the owners have confirmed island and maturity. Defaults to true for an
 # agent.yaml in the agent repo and to false for a seed manifest in manifests/.
 confirmed: true
