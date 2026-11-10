@@ -19,3 +19,4 @@ SAAF-Project/Audit-criteria
 SAAF-Project/OWASP-top-10-LLM-assessment
 SAAF-Project/SAAF-circuit-breaker
 SAAF-Project/hallucination-detection-agent
+SAAF-Project/EU-AI-Act-DNB-Auditor
