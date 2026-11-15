@@ -252,5 +252,27 @@ class GeneratedAt(unittest.TestCase):
         self.assertIn("T", data["generated_at"])
 
 
+class UntrustedManifests(unittest.TestCase):
+    def test_yaml_error_does_not_quote_the_manifest(self):
+        text = "name: Secret Agent\nmandate:\n  purpose: do-not-publish-this\n  bad: [unclosed\n"
+        e = build_map.entry("SAAF-Project/Private", text, "agent.yaml", "repo")
+        self.assertEqual(e["status"], "invalid")
+        published = json.dumps(e)
+        self.assertNotIn("do-not-publish-this", published)
+        self.assertNotIn("unclosed", published)
+        self.assertTrue(e["warnings"][0].startswith("manifest is not valid YAML"))
+
+    def test_manifest_cannot_claim_another_repo(self):
+        m = example() | {"repo": "SAAF-Project/RCM-Builder"}
+        e = build_map.entry("SAAF-Project/Impostor", yaml.safe_dump(m), "agent.yaml", "repo")
+        self.assertEqual(e["repo"], "SAAF-Project/Impostor")
+        self.assertIn("manifest names a different repo; the repo it was read from is used", e["warnings"])
+
+    def test_matching_repo_field_gives_no_warning(self):
+        m = example() | {"repo": "SAAF-Project/Same"}
+        e = build_map.entry("SAAF-Project/Same", yaml.safe_dump(m), "agent.yaml", "repo")
+        self.assertEqual(e["warnings"], [])
+
+
 if __name__ == "__main__":
     unittest.main()

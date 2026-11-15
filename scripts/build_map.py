@@ -156,20 +156,29 @@ def entry(repo, text, src, kind):
     try:
         m = yaml.safe_load(text) or {}
     except yaml.YAMLError as e:
+        # Never publish the parser's message: it can quote the manifest, and a
+        # private repo's manifest must not leak into the public map or build log.
+        mark = getattr(e, "problem_mark", None)
+        where = f" (line {mark.line + 1})" if mark is not None else ""
         return {"repo": repo, "name": repo.split("/")[-1], "status": "invalid",
                 "source": src, "has_mandate": False, "confirmed": False,
-                "warnings": [f"YAML error: {e}"]}
+                "warnings": [f"manifest is not valid YAML{where}"]}
     if not isinstance(m, dict):
         return {"repo": repo, "name": repo.split("/")[-1], "status": "invalid",
                 "source": src, "has_mandate": False, "confirmed": False,
                 "warnings": ["manifest is not a mapping"]}
-    m["repo"] = m.get("repo") or repo
+    # The repo is the one we fetched from (repos.txt), never what the manifest claims,
+    # so one manifest cannot pose as another agent.
+    claimed = m.get("repo")
+    m["repo"] = repo
     m["depends_on"] = as_list(m.get("depends_on"))
     m["tags"] = as_list(m.get("tags"))
     m["status"] = "mapped"
     m["source_kind"] = kind
     m["source"] = src
     m["warnings"] = check(m)
+    if claimed and claimed != repo:
+        m["warnings"].append("manifest names a different repo; the repo it was read from is used")
     m["confirmed"], bad = confirmed(m, kind)
     if bad:
         m["warnings"].append(bad)
