@@ -23,7 +23,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install pyyaml
+      - run: pip install -r requirements.txt
       - run: python -m unittest discover tests
 
   # Builds and commits map.json: push to main, schedule and manual dispatch only,
@@ -37,7 +37,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install pyyaml
+      - run: pip install -r requirements.txt
       - run: python scripts/build_map.py
         env:
           GITHUB_TOKEN: ${{ secrets.SAAF_READ_TOKEN || secrets.GITHUB_TOKEN }}
