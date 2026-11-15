@@ -59,7 +59,7 @@ What it claims about each agent: its island and maturity (the portal's ids), its
 - Every seed manifest in `manifests/` uses the vocabulary.
 
 **CO-5**
-- Given a manifest that is not valid YAML, or not a mapping, that agent is listed as `invalid` and the build still writes `map.json` for all others.
+- Given a manifest that is not valid YAML, or not a mapping, or with a field of the wrong type, that agent is listed as `invalid` or gets a warning, and the build still writes `map.json` for all others.
 - Given a non-integer `open_slots`, the value becomes 0 with a warning and the build completes.
 - Given the hostile manifests in `tests/test_hostile_manifests.py`, the build completes and nothing outside the allowlist reaches `map.json`.
 - Given more unreadable repositories than `--max-read-errors` (default 2), the build exits with an error and leaves the existing `map.json` unchanged.
@@ -81,13 +81,12 @@ Honest limits an auditor would reasonably expect this service to address, that i
 
 - **"Confirmed" is self-declared.** The map does not check who added `agent.yaml`, and a manifest's own `confirmed` value wins. Signed attestations by an independent reviewer would be the long-term answer.
 - **Input limits.** Manifest size, YAML structure and free-text fields are not yet capped, and dependencies on untracked repositories add entries to the map.
-- **Build robustness under every malformed input** is not yet proven; one challenge finding in this area is still to be reproduced.
 - **Workflow hardening.** Least-privilege permissions per job, actions pinned to commit SHAs, and review of the bot's generated commits are still to do; branch protection on `main` needs an organisation admin.
 - **Token scope** for reading private repositories is not documented.
 - **The seed generator** (`scripts/seed_from_portal.py`) does not yet validate portal data.
 - **`plan` and `owners`** are proposed in `agent.example.yaml` but not read by the build yet.
 
-Fixed during the 2026 hardening round: parser error text could reach the public map; a manifest's own `repo` field could override the repository it was read from; an unreadable repository fell back to its seed silently.
+Fixed during the 2026 hardening round: parser error text could reach the public map; a manifest's own `repo` field could override the repository it was read from; an unreadable repository fell back to its seed silently; a manifest field of the wrong type could stop the build for every repository.
 
 ## 6. Observability
 
@@ -112,7 +111,7 @@ Fixed during the 2026 hardening round: parser error text could reach the public 
 | CO-3 #2 (max runtime from Ready onward) | ☑ | `test_max_runtime_required_from_ready_onward` |
 | CO-3 #3 (each mandate gap warned) | ☐ | Logic in `check_mandate()`; only some gaps have named tests |
 | CO-4 #1–#3 (portal vocabulary) | ☑ | `test_portal_ids_and_keys`, `test_old_labels_are_flagged`, `test_plan_stage_is_flagged`, `test_seeds_use_the_vocabulary` |
-| CO-5 #1 (invalid manifest doesn't stop the build) | ◐ | Handled in `entry()`; one robustness finding still to be reproduced |
+| CO-5 #1 (invalid manifest doesn't stop the build) | ☑ | `test_wrong_field_types_never_stop_the_build`, `test_unexpected_error_marks_only_that_repo_invalid` |
 | CO-5 #2 (bad open_slots tolerated) | ☑ | `test_anything_else_is_zero_and_flagged`, `test_build_completes_with_open_slots_lots` |
 | CO-5 #3 (hostile manifests) | ☑ | `tests/test_hostile_manifests.py` |
 | CO-5 #4 (too many read errors → fail, keep last map) | ☑ | `test_too_many_unreadable_repos_fail_and_keep_the_last_map` |
