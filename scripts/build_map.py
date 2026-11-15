@@ -40,6 +40,10 @@ REQUIRED = ["name", "repo", "island", "maturity", "description"]
 PUBLISHED = ["name", "repo", "island", "maturity", "category", "language", "description",
              "tags", "depends_on", "used_by", "open_slots", "status", "source_kind", "source",
              "warnings", "has_mandate", "confirmed", "review"]
+# Published fields that must be text, and lists whose items must be text. Anything
+# else is coerced or dropped with a warning, so one manifest cannot crash the build.
+TEXT_FIELDS = ["name", "island", "maturity", "category", "language", "description"]
+TEXT_LISTS = ["tags", "depends_on"]
 # Actions every mandate should forbid (the "agents gone rogue" baseline).
 BASELINE_FORBIDDEN = ["change_own_config"]
 
@@ -80,6 +84,32 @@ def as_list(v):
     return v if isinstance(v, list) else [v]
 
 
+def coerce_types(m):
+    """Make every published field the type the build and the page expect. A number,
+    date or true/false where text belongs becomes text; a list or mapping is dropped.
+    List items that are not text are dropped. Returns warnings (they name the field,
+    never its value)."""
+    w = []
+    for f in TEXT_FIELDS:
+        v = m.get(f)
+        if v is None or isinstance(v, str):
+            continue
+        if isinstance(v, (list, dict)):
+            del m[f]
+            w.append(f"{f} must be text; ignored")
+        else:
+            m[f] = str(v)
+            w.append(f"{f} must be text")
+    for f in TEXT_LISTS:
+        items = as_list(m.get(f))
+        kept = [x for x in items if isinstance(x, str) and x.strip()]
+        m[f] = kept
+        if len(kept) < len(items):
+            n = len(items) - len(kept)
+            w.append(f"{n} {f} entr{'ies' if n > 1 else 'y'} not text; ignored")
+    return w
+
+
 def normalize_forbidden(mandate):
     """Accept plain names or {action, rationale} entries; return list of dicts."""
     out = []
@@ -111,7 +141,10 @@ def check_mandate(m):
     if not isinstance(mandate, dict):
         w.append("no mandate block")
         return w
-    allowed = set(as_list(mandate.get("allowed_tools")))
+    tools = as_list(mandate.get("allowed_tools"))
+    allowed = {t for t in tools if isinstance(t, str)}
+    if len(allowed) < len(tools):
+        w.append("allowed_tools must be a list of names")
     fl = normalize_forbidden(mandate)
     forbidden = {f["action"] for f in fl}
     # Warnings count rather than name mandate items: they are published in map.json.
@@ -177,12 +210,12 @@ def entry(repo, text, src, kind):
     # so one manifest cannot pose as another agent.
     claimed = m.get("repo")
     m["repo"] = repo
-    m["depends_on"] = as_list(m.get("depends_on"))
-    m["tags"] = as_list(m.get("tags"))
+    m.pop("used_by", None)      # computed from depends_on, never taken from a manifest
+    typed = coerce_types(m)
     m["status"] = "mapped"
     m["source_kind"] = kind
     m["source"] = src
-    m["warnings"] = check(m)
+    m["warnings"] = typed + check(m)
     if claimed and claimed != repo:
         m["warnings"].append("manifest names a different repo; the repo it was read from is used")
     m["confirmed"], bad = confirmed(m, kind)
@@ -205,7 +238,9 @@ def publish(m):
 
 
 def render(out):
-    return json.dumps(out, indent=2, ensure_ascii=False) + "\n"
+    # default=str: a date or other YAML type in a free-form field (e.g. review)
+    # becomes text instead of stopping the build.
+    return json.dumps(out, indent=2, ensure_ascii=False, default=str) + "\n"
 
 
 def keep_generated_at(out, path):
@@ -252,7 +287,13 @@ def main():
                             "warnings": unread + ["no agent.yaml in repo and no seed manifest"]}
             print(f"  - {repo}: unmapped")
             continue
-        m = entry(repo, text, src, kind)
+        try:
+            m = entry(repo, text, src, kind)
+        except Exception as e:  # a last line of defence: one manifest never stops the map
+            print(f"  ! {repo}: {type(e).__name__} while processing the manifest", file=sys.stderr)
+            m = {"repo": repo, "name": repo.split("/")[-1], "status": "invalid",
+                 "source": src, "has_mandate": False, "confirmed": False,
+                 "warnings": ["manifest could not be processed"]}
         m["warnings"] = unread + m["warnings"]
         if m["status"] == "invalid":
             agents[repo] = m
@@ -281,7 +322,7 @@ def main():
 
     # Reverse edges: who uses me.
     for m in agents.values():
-        m.setdefault("used_by", [])
+        m["used_by"] = []
     for m in agents.values():
         for d in m.get("depends_on", []):
             agents[d]["used_by"].append(m["repo"])

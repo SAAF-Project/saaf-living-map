@@ -324,5 +324,74 @@ class ReadErrors(unittest.TestCase):
             self.assertEqual(out.read_text("utf-8"), "last good map")
 
 
+class FieldTypes(ReadErrors):
+    """A field of the wrong type must never stop the build for every other repo."""
+
+    # Each of these crashed the build before (field types were not checked).
+    BAD = {
+        "island_list": {"island": ["planning"]},
+        "maturity_list": {"maturity": ["ready"]},
+        "nested_tools": {"mandate": {"allowed_tools": [["read_rcm"]]}},
+        "date_description": {"description": __import__("datetime").date(2026, 11, 15)},
+        "depends_on_mapping": {"depends_on": [{"repo": "SAAF-Project/B"}]},
+        "depends_on_number": {"depends_on": [5]},
+        "used_by_text": {"used_by": "SAAF-Project/B"},
+    }
+
+    def remote_with(self, bad):
+        good = yaml.safe_dump(example())
+        text = yaml.safe_dump(example() | bad)
+        return lambda r: (text, "agent.yaml", None) if r.endswith("/A") else (good, "agent.yaml", None)
+
+    def test_wrong_field_types_never_stop_the_build(self):
+        for name, bad in self.BAD.items():
+            with self.subTest(name), tempfile.TemporaryDirectory() as d:
+                out = Path(d) / "map.json"
+                self.build(self.remote_with(bad), out)
+                self.assertEqual(self.agent(out, "SAAF-Project/B")["status"], "mapped")
+                self.assertIn(self.agent(out, "SAAF-Project/A")["status"], ("mapped", "invalid"))
+
+    def test_text_field_of_the_wrong_type_is_ignored_with_a_warning(self):
+        m = build_map.entry("SAAF-Project/A", yaml.safe_dump(example() | {"island": ["planning"]}),
+                            "agent.yaml", "repo")
+        self.assertNotIn("island", m)
+        self.assertIn("island must be text; ignored", m["warnings"])
+
+    def test_non_text_list_items_are_dropped_with_a_warning(self):
+        m = build_map.entry("SAAF-Project/A", yaml.safe_dump(example() | {
+            "depends_on": ["SAAF-Project/B", {"repo": "x"}, 5]}), "agent.yaml", "repo")
+        self.assertEqual(m["depends_on"], ["SAAF-Project/B"])
+        self.assertIn("2 depends_on entries not text; ignored", m["warnings"])
+
+    def test_nested_allowed_tools_fail_the_mandate(self):
+        bad = example()
+        bad["mandate"]["allowed_tools"] = [["read_rcm"]]
+        m = build_map.entry("SAAF-Project/A", yaml.safe_dump(bad), "agent.yaml", "repo")
+        self.assertIn("allowed_tools must be a list of names", m["warnings"])
+        self.assertFalse(m["has_mandate"])
+
+    def test_manifest_cannot_set_used_by(self):
+        remote = self.remote_with({"used_by": ["SAAF-Project/X"]})
+        with tempfile.TemporaryDirectory() as d:
+            out = Path(d) / "map.json"
+            self.build(remote, out)
+            self.assertEqual(self.agent(out, "SAAF-Project/A")["used_by"], [])
+
+    def test_unexpected_error_marks_only_that_repo_invalid(self):
+        real = build_map.entry
+        def entry(repo, *a):
+            if repo.endswith("/A"):
+                raise RuntimeError("boom")
+            return real(repo, *a)
+        with tempfile.TemporaryDirectory() as d, mock.patch.object(build_map, "entry", entry):
+            out = Path(d) / "map.json"
+            self.build(self.remote_with({}), out)
+            a = self.agent(out, "SAAF-Project/A")
+            self.assertEqual(a["status"], "invalid")
+            self.assertIn("manifest could not be processed", a["warnings"])
+            self.assertNotIn("boom", out.read_text("utf-8"))
+            self.assertEqual(self.agent(out, "SAAF-Project/B")["status"], "mapped")
+
+
 if __name__ == "__main__":
     unittest.main()
