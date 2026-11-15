@@ -274,5 +274,55 @@ class UntrustedManifests(unittest.TestCase):
         self.assertEqual(e["warnings"], [])
 
 
+class ReadErrors(unittest.TestCase):
+    """A repo that cannot be read must never fall back to its seed silently."""
+
+    REPOS = ["SAAF-Project/A", "SAAF-Project/B", "SAAF-Project/C", "SAAF-Project/D"]
+
+    def build(self, remote, out, max_errors=None):
+        with tempfile.TemporaryDirectory() as d:
+            repos = Path(d) / "repos.txt"
+            repos.write_text("\n".join(self.REPOS) + "\n", "utf-8")
+            argv = ["build_map.py", "--repos", str(repos), "--out", str(out)]
+            if max_errors is not None:
+                argv += ["--max-read-errors", str(max_errors)]
+            seed = yaml.safe_dump(example())
+            with mock.patch.object(sys, "argv", argv), \
+                    mock.patch.object(build_map, "fetch_remote", remote), \
+                    mock.patch.object(build_map, "fetch_seed", lambda r: (seed, "manifests/x.yaml")), \
+                    contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+                build_map.main()
+
+    def agent(self, out, repo):
+        return next(m for m in json.loads(out.read_text("utf-8"))["agents"] if m["repo"] == repo)
+
+    def test_unreadable_repo_shows_its_seed_with_a_warning(self):
+        remote = lambda r: (None, None, "HTTP 401") if r.endswith("/A") else (None, None, None)
+        with tempfile.TemporaryDirectory() as d:
+            out = Path(d) / "map.json"
+            self.build(remote, out)
+            a = self.agent(out, "SAAF-Project/A")
+            self.assertEqual(a["source_kind"], "seed")
+            self.assertIn("could not read agent.yaml from the repo (HTTP 401); showing the seed instead",
+                          a["warnings"])
+            self.assertFalse(any("could not read" in w for w in self.agent(out, "SAAF-Project/B")["warnings"]))
+
+    def test_repo_without_agent_yaml_gets_no_read_warning(self):
+        with tempfile.TemporaryDirectory() as d:
+            out = Path(d) / "map.json"
+            self.build(lambda r: (None, None, None), out)
+            for repo in self.REPOS:
+                self.assertFalse(any("could not read" in w for w in self.agent(out, repo)["warnings"]))
+
+    def test_too_many_unreadable_repos_fail_and_keep_the_last_map(self):
+        with tempfile.TemporaryDirectory() as d:
+            out = Path(d) / "map.json"
+            out.write_text("last good map", "utf-8")
+            with self.assertRaises(SystemExit) as stop:
+                self.build(lambda r: (None, None, "network error"), out, max_errors=2)
+            self.assertEqual(stop.exception.code, 1)
+            self.assertEqual(out.read_text("utf-8"), "last good map")
+
+
 if __name__ == "__main__":
     unittest.main()

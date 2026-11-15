@@ -45,7 +45,11 @@ BASELINE_FORBIDDEN = ["change_own_config"]
 
 
 def fetch_remote(repo):
+    """Return (text, url, error). error is None when the file was read, or when the
+    repo simply has no agent.yaml (404 on both branches); otherwise it says why the
+    repo could not be read, so the fallback to a seed is never silent."""
     token = os.environ.get("GITHUB_TOKEN")
+    error = None
     for branch in ("main", "master"):
         url = f"https://raw.githubusercontent.com/{repo}/{branch}/agent.yaml"
         req = urllib.request.Request(url)
@@ -53,14 +57,16 @@ def fetch_remote(repo):
             req.add_header("Authorization", f"Bearer {token}")
         try:
             with urllib.request.urlopen(req, timeout=15) as r:
-                return r.read().decode("utf-8"), url
+                return r.read().decode("utf-8"), url, None
         except urllib.error.HTTPError as e:
             if e.code != 404:
-                print(f"  ! {repo}@{branch}: HTTP {e.code}", file=sys.stderr)
-        except Exception as e:  # network trouble: fall back to seed
-            print(f"  ! {repo}@{branch}: {e}", file=sys.stderr)
+                error = f"HTTP {e.code}"
+                print(f"  ! {repo}@{branch}: {error}", file=sys.stderr)
+        except Exception as e:  # network trouble: fall back to seed, but say so
+            error = "network error"
+            print(f"  ! {repo}@{branch}: {type(e).__name__}", file=sys.stderr)
             break
-    return None, None
+    return None, None, error
 
 
 def fetch_seed(repo):
@@ -222,25 +228,32 @@ def main():
     ap.add_argument("--repos", default=str(ROOT / "repos.txt"))
     ap.add_argument("--out", default=str(ROOT / "map.json"))
     ap.add_argument("--offline", action="store_true", help="only use seed manifests")
+    ap.add_argument("--max-read-errors", type=int, default=2,
+                    help="fail without writing the map when more repos than this cannot be read")
     a = ap.parse_args()
 
     repos = [l.split("#")[0].strip() for l in Path(a.repos).read_text().splitlines()]
     repos = [r for r in repos if r]
 
     agents = {}
+    read_errors = []
     for repo in repos:
-        text, src = (None, None) if a.offline else fetch_remote(repo)
+        text, src, err = (None, None, None) if a.offline else fetch_remote(repo)
         kind = "repo"
+        if err:
+            read_errors.append(repo)
         if text is None:
             text, src = fetch_seed(repo)
             kind = "seed"
+        unread = [f"could not read agent.yaml from the repo ({err}); showing the seed instead"] if err else []
         if text is None:
             agents[repo] = {"repo": repo, "name": repo.split("/")[-1], "status": "unmapped",
                             "has_mandate": False, "confirmed": False,
-                            "warnings": ["no agent.yaml in repo and no seed manifest"]}
+                            "warnings": unread + ["no agent.yaml in repo and no seed manifest"]}
             print(f"  - {repo}: unmapped")
             continue
         m = entry(repo, text, src, kind)
+        m["warnings"] = unread + m["warnings"]
         if m["status"] == "invalid":
             agents[repo] = m
             print(f"  x {repo}: invalid manifest")
@@ -250,6 +263,13 @@ def main():
         print(f"  + {repo}: {kind} ({len(m['warnings'])} warnings)")
         if dropped:
             print(f"  ~ {repo}: dropped keys not in the allowlist: {', '.join(dropped)}")
+
+    # Too many unreadable repos means the token or GitHub is broken, not the manifests:
+    # keep the last good map and fail the job, instead of quietly publishing seeds.
+    if len(read_errors) > a.max_read_errors:
+        print(f"could not read {len(read_errors)} repos (limit {a.max_read_errors}): "
+              f"{', '.join(read_errors)}; map.json not written", file=sys.stderr)
+        sys.exit(1)
 
     # Dependencies pointing at repos we don't track become ghost nodes.
     for m in list(agents.values()):
