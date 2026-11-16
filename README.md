@@ -16,3 +16,11 @@
 3. `index.html` renders `map.json` as the island map and an overview. The page accepts deep links, `#island=<id>` and `#agent=<owner/repo>`, and the address bar follows the open agent, so any view can be shared. `.nojekyll` tells GitHub Pages to serve these files as they are, without a Jekyll build.
 
 See also: the mandate guard ([SAAF-Project/Audit-criteria PR #1](https://github.com/SAAF-Project/Audit-criteria/pull/1)) reads the same mandate block but checks different fields: output invariants and approval gates. Aligning the two sets of fields is still open.
+
+## Security notes
+
+Report a weakness as the [SAAF security policy](https://github.com/SAAF-Project/.github/blob/main/SECURITY.md) describes, never in a public issue. Describe what you found, where (file and line, or URL), and how to reproduce it.
+
+In scope: `scripts/build_map.py` and the build workflow (`.github/workflows/build-map.yml`), the published `map.json` and the map page (`index.html`, `app.js`), and the seed manifests in `manifests/`. Out of scope: the agent repositories themselves (report to their owners) and GitHub's own infrastructure.
+
+What the map publishes, by design: `map.json` is public. It carries only the fields on the build's allowlist; an agent's mandate is checked but never published, and neither are any `owners`. An agent marked "confirmed" has its own agent.yaml in its repository: the map does not verify who added that file.
