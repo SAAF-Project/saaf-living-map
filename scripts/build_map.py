@@ -8,7 +8,7 @@ Repos with neither still appear on the map as "unmapped".
 
 Usage:  python scripts/build_map.py [--repos repos.txt] [--out map.json] [--offline]
 """
-import argparse, json, os, sys, urllib.request, urllib.error
+import argparse, json, os, re, sys, urllib.request, urllib.error
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -44,6 +44,9 @@ PUBLISHED = ["name", "repo", "island", "maturity", "category", "language", "desc
 # else is coerced or dropped with a warning, so one manifest cannot crash the build.
 TEXT_FIELDS = ["name", "island", "maturity", "category", "language", "description"]
 TEXT_LISTS = ["tags", "depends_on"]
+# A template blank such as "[Agent name]" or "[repo-name]" that was never filled in.
+# Two or more words, or a hyphenated name, inside brackets: "[UC7]" or "[beta]" is ordinary text.
+PLACEHOLDER = re.compile(r"\[(?=[^\[\]]*[A-Za-z])[^\[\]]*[ -][^\[\]]*\]")
 # Actions every mandate should forbid (the "agents gone rogue" baseline).
 BASELINE_FORBIDDEN = ["change_own_config"]
 
@@ -131,7 +134,22 @@ def check(m):
         w.append(f"maturity {m['maturity']} is a plan stage; a repo starts at building")
     elif m.get("maturity") and m["maturity"] not in MATURITY:
         w.append(f"unknown maturity: {m['maturity']} (use one of: {', '.join(MATURITY)})")
-    return w + check_mandate(m)
+    return w + check_placeholders(m) + check_mandate(m)
+
+
+def check_placeholders(m):
+    """Warn about template blanks left in the published text fields or the mandate's
+    purpose. Warnings name the field, never its text."""
+    w = [f"{f} still has a template placeholder" for f in TEXT_FIELDS
+         if isinstance(m.get(f), str) and PLACEHOLDER.search(m[f])]
+    for f in TEXT_LISTS:
+        n = sum(1 for x in as_list(m.get(f)) if isinstance(x, str) and PLACEHOLDER.search(x))
+        if n:
+            w.append(f"{n} {f} entr{'ies' if n > 1 else 'y'} still a template placeholder")
+    mandate = m.get("mandate")
+    if isinstance(mandate, dict) and isinstance(mandate.get("purpose"), str) and PLACEHOLDER.search(mandate["purpose"]):
+        w.append("mandate purpose still has a template placeholder")
+    return w
 
 
 def check_mandate(m):

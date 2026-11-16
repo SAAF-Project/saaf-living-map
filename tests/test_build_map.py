@@ -393,5 +393,49 @@ class FieldTypes(ReadErrors):
             self.assertEqual(self.agent(out, "SAAF-Project/B")["status"], "mapped")
 
 
+class TemplatePlaceholders(unittest.TestCase):
+    """A blank from the agent template that was never filled in is flagged, not published as if real."""
+
+    TEMPLATE = (
+        'name: "[Agent name]"\n'
+        'repo: SAAF-Project/[repo-name]\n'
+        'island: planning\n'
+        'maturity: building\n'
+        'description: "[One sentence: what the agent does and for whom.]"\n'
+        'mandate:\n'
+        '  purpose: "[One sentence. What the agent exists to do.]"\n'
+        '  allowed_tools: [read_input_file, write_findings]\n'
+        '  forbidden_actions:\n'
+        '    - action: change_own_config\n'
+        '      rationale: Changes to this mandate go through a pull request.\n'
+        '  trusted_inputs: [input_file]\n'
+        '  human_approval_required_for: [using the findings in an audit report]\n'
+        '  evidence_policy: cite_only_given_context\n')
+
+    def test_unfilled_template_is_flagged_field_by_field(self):
+        w = build_map.entry("SAAF-Project/new-agent", self.TEMPLATE, "agent.yaml", "repo")["warnings"]
+        for f in ("name", "description", "mandate purpose"):
+            self.assertIn(f + " still has a template placeholder", w)
+        self.assertIn("manifest names a different repo; the repo it was read from is used", w)
+
+    def test_placeholder_warnings_never_quote_the_text(self):
+        w = build_map.entry("SAAF-Project/new-agent", self.TEMPLATE, "agent.yaml", "repo")["warnings"]
+        self.assertFalse(any("Agent name" in x or "One sentence" in x for x in w), w)
+
+    def test_filled_in_template_gives_no_placeholder_warning(self):
+        filled = (self.TEMPLATE.replace("[Agent name]", "Invoice Checker").replace("[repo-name]", "new-agent")
+                  .replace("[One sentence: what the agent does and for whom.]", "Checks invoices against orders for auditors.")
+                  .replace("[One sentence. What the agent exists to do.]", "Flag invoices that do not match an order."))
+        e = build_map.entry("SAAF-Project/new-agent", filled, "agent.yaml", "repo")
+        self.assertEqual(e["warnings"], [])
+        self.assertTrue(e["has_mandate"])
+
+    def test_yaml_lists_and_ordinary_brackets_are_not_placeholders(self):
+        self.assertEqual(build_map.check(example() | {"description": "Reads the RCM [UC7] and writes a work program [beta]"}), [])
+        self.assertEqual(build_map.check(example() | {"description": "Totals [1] and [2]"}), [])
+        w = build_map.check(example() | {"tags": ["audit", "[your tag]"]})
+        self.assertIn("1 tags entry still a template placeholder", w)
+
+
 if __name__ == "__main__":
     unittest.main()
