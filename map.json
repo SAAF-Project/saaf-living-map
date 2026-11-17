@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-17T13:21:03+00:00",
+  "generated_at": "2026-11-17T22:20:10+00:00",
   "islands": [
     {
       "id": "foundation",
@@ -69,8 +69,8 @@
       "governance": 7,
       "quarry": 0
     },
-    "with_warnings": 16,
-    "confirmed": 3
+    "with_warnings": 15,
+    "confirmed": 4
   },
   "agents": [
     {
@@ -280,31 +280,23 @@
       "repo": "SAAF-Project/Executive-Summary-Writer",
       "island": "reporting",
       "maturity": "ready",
-      "category": "Audit Reporting",
+      "category": "Reporting",
       "language": "Python",
-      "description": "Guides an audit manager through root cause, finding relationships, storyline and tone before writing the Executive Board summary.",
+      "description": "Guides an audit manager through a structured preparation phase, then drafts the three-paragraph Executive Board summary of a finished audit report.",
       "tags": [
-        "Executive summary",
-        "LangGraph",
-        "Reporting"
+        "executive-summary",
+        "board-reporting",
+        "IIA",
+        "langgraph"
       ],
       "depends_on": [],
       "used_by": [],
-      "open_slots": 0,
       "status": "mapped",
-      "source_kind": "seed",
-      "source": "manifests/SAAF-Project__Executive-Summary-Writer.yaml",
-      "warnings": [
-        "no mandate block"
-      ],
-      "has_mandate": false,
-      "confirmed": false,
-      "review": {
-        "verdict": "reviewed",
-        "structure": "Python scripts/graph pipeline + FastAPI agent-service + frontend",
-        "has_tests": true,
-        "has_samples": true
-      }
+      "source_kind": "repo",
+      "source": "https://raw.githubusercontent.com/SAAF-Project/Executive-Summary-Writer/main/agent.yaml",
+      "warnings": [],
+      "has_mandate": true,
+      "confirmed": true
     },
     {
       "name": "GDPR AI Audit",
