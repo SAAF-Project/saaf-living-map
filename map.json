@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-17T12:59:49+00:00",
+  "generated_at": "2026-11-17T13:21:03+00:00",
   "islands": [
     {
       "id": "foundation",
@@ -56,21 +56,21 @@
     "open_slots": 0,
     "by_maturity": {
       "building": 2,
-      "ready": 18,
+      "ready": 17,
       "tested": 0,
-      "improving": 0
+      "improving": 1
     },
     "by_island": {
       "foundation": 0,
-      "planning": 2,
+      "planning": 3,
       "collection": 4,
       "reporting": 3,
-      "monitoring": 4,
+      "monitoring": 3,
       "governance": 7,
       "quarry": 0
     },
-    "with_warnings": 17,
-    "confirmed": 2
+    "with_warnings": 16,
+    "confirmed": 3
   },
   "agents": [
     {
@@ -163,34 +163,28 @@
     {
       "name": "Compliance Report Generator",
       "repo": "SAAF-Project/Compliance-Report-Generator",
-      "island": "monitoring",
-      "maturity": "ready",
+      "island": "planning",
+      "maturity": "improving",
       "category": "Compliance",
       "language": "Python",
-      "description": "Finds the relevant regulatory frameworks for a given financial entity.",
+      "description": "Maps an engagement profile to applicable regulatory frameworks from a built-in knowledge base and has a model draft a structured compliance overview for audit planning.",
       "tags": [
-        "DORA",
-        "NIS2",
-        "GDPR",
-        "Grounding"
+        "compliance",
+        "regulatory-scoping",
+        "audit-planning",
+        "llm",
+        "anthropic",
+        "openai-compatible"
       ],
       "depends_on": [],
       "used_by": [],
       "open_slots": 0,
       "status": "mapped",
-      "source_kind": "seed",
-      "source": "manifests/SAAF-Project__Compliance-Report-Generator.yaml",
-      "warnings": [
-        "no mandate block"
-      ],
-      "has_mandate": false,
-      "confirmed": false,
-      "review": {
-        "verdict": "reviewed",
-        "structure": "Python package + CLI, CI (tests, Ruff, weekly e2e clause check)",
-        "has_tests": true,
-        "has_samples": false
-      }
+      "source_kind": "repo",
+      "source": "https://raw.githubusercontent.com/SAAF-Project/Compliance-Report-Generator/main/agent.yaml",
+      "warnings": [],
+      "has_mandate": true,
+      "confirmed": true
     },
     {
       "name": "CUEC Crosscheck",
@@ -537,29 +531,22 @@
       "maturity": "ready",
       "category": "Audit Reporting",
       "language": "Python",
-      "description": "P2P 3-way match audit report generator with data and reporting tools.",
+      "description": "Compares a purchase order, goods receipt and invoice and reports per line whether they match within the auditor's tolerances.",
       "tags": [
         "P2P",
-        "3-way-match",
-        "PDF-report"
+        "3-way-match"
       ],
       "depends_on": [],
       "used_by": [],
-      "open_slots": 0,
       "status": "mapped",
-      "source_kind": "seed",
-      "source": "manifests/SAAF-Project__three-way-match-audit.yaml",
+      "source_kind": "repo",
+      "source": "https://raw.githubusercontent.com/SAAF-Project/three-way-match-audit/master/agent.yaml",
       "warnings": [
-        "no mandate block"
+        "mandate lists no trusted inputs",
+        "ready agent without max_runtime_minutes"
       ],
       "has_mandate": false,
-      "confirmed": false,
-      "review": {
-        "verdict": "reviewed",
-        "structure": "FastAPI webapp (webapp/) with matcher + parsers services, plus legacy PDF report script under tools/scripts/",
-        "has_tests": false,
-        "has_samples": true
-      }
+      "confirmed": false
     },
     {
       "name": "IAM Access Review",
