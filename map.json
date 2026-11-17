@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-04T14:36:18+00:00",
+  "generated_at": "2026-11-17T12:59:49+00:00",
   "islands": [
     {
       "id": "foundation",
@@ -50,12 +50,12 @@
     }
   ],
   "summary": {
-    "agents": 19,
-    "mapped": 19,
+    "agents": 20,
+    "mapped": 20,
     "unmapped": 0,
     "open_slots": 0,
     "by_maturity": {
-      "building": 1,
+      "building": 2,
       "ready": 18,
       "tested": 0,
       "improving": 0
@@ -66,11 +66,11 @@
       "collection": 4,
       "reporting": 3,
       "monitoring": 4,
-      "governance": 6,
+      "governance": 7,
       "quarry": 0
     },
     "with_warnings": 17,
-    "confirmed": 1
+    "confirmed": 2
   },
   "agents": [
     {
@@ -222,6 +222,32 @@
         "has_tests": false,
         "has_samples": true
       }
+    },
+    {
+      "name": "Customs",
+      "repo": "SAAF-Project/customs",
+      "island": "governance",
+      "maturity": "building",
+      "category": "AI Governance",
+      "language": "Python",
+      "description": "Deterministic pull request check that inspects contributions to shared SAAF prompts, skills and agent settings, and blocks hidden or harmful instructions before they are merged.",
+      "tags": [
+        "guard",
+        "CI",
+        "prompt-injection",
+        "supply-chain",
+        "skills",
+        "agent-settings",
+        "security-challenge"
+      ],
+      "depends_on": [],
+      "used_by": [],
+      "status": "mapped",
+      "source_kind": "repo",
+      "source": "https://raw.githubusercontent.com/SAAF-Project/customs/main/agent.yaml",
+      "warnings": [],
+      "has_mandate": true,
+      "confirmed": true
     },
     {
       "name": "ExecGRC",
