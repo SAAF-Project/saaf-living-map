@@ -6,3 +6,8 @@ extra_include = [
   "manifests/*.yaml",
   "agent.example.yaml",
 ]
+
+# Destinations on top of the default approved list. Subdomains are covered.
+extra_allowed_domains = [
+  "saaf-project.github.io",  # the published living map, linked from the README
+]
