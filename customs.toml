@@ -1,0 +1,8 @@
+# Customs settings. Customs reads this file from the base branch, so a pull
+# request cannot change the rules that apply to itself.
+
+# Agent manifests: the per-repository copies and the example.
+extra_include = [
+  "manifests/*.yaml",
+  "agent.example.yaml",
+]
