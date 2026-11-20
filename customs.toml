@@ -1,0 +1,13 @@
+# Customs settings. Customs reads this file from the base branch, so a pull
+# request cannot change the rules that apply to itself.
+
+# Agent manifests: the per-repository copies and the example.
+extra_include = [
+  "manifests/*.yaml",
+  "agent.example.yaml",
+]
+
+# Destinations on top of the default approved list. Subdomains are covered.
+extra_allowed_domains = [
+  "saaf-project.github.io",  # the published living map, linked from the README
+]
