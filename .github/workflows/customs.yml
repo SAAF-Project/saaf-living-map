@@ -1,6 +1,9 @@
 # Customs inspects the agent manifests and other prompt files a pull request
 # changes. Report-only for now: the check is not required in branch protection,
-# because pull requests that change only Python or web files report NOT ASSESSED.
+# because pull requests that change only Python or web files report NOT ASSESSED,
+# and branch protection on main would block the living-map bot that pushes
+# map.json. Revisit once the reusable workflow can pass --allow-empty and the
+# check can be required through a ruleset with the bot on the bypass list.
 
 name: Customs
 
