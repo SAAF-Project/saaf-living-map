@@ -19,3 +19,4 @@ review:
   structure: "Single-file Node.js HTTP app (ESM) with browser UI + node:test suite"
   has_tests: true
   has_samples: false
+# test: Customs extra_include
