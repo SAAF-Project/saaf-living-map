@@ -14,7 +14,7 @@
 | **Repository** | https://github.com/SAAF-Project/saaf-living-map |
 | **Live map** | https://saaf-project.github.io/saaf-living-map/ |
 | **Maintainer(s)** | Tony Barratt (@TonyBarratt100) |
-| **Last reviewed** | 2026-11-15 |
+| **Last reviewed** | 2026-11-23 |
 | **Status** | Draft |
 
 ## 1. What the service does
