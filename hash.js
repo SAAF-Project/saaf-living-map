@@ -36,3 +36,4 @@
   if (typeof module === "object" && module.exports) module.exports = api;
   else root.LivingMapHash = api;
 })(typeof globalThis !== "undefined" ? globalThis : this);
+// Proof-PR comment for allow-empty; this PR will be closed unmerged.
