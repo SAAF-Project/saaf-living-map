@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-17T22:20:10+00:00",
+  "generated_at": "2026-11-23T21:17:50+00:00",
   "islands": [
     {
       "id": "foundation",
@@ -55,8 +55,8 @@
     "unmapped": 0,
     "open_slots": 0,
     "by_maturity": {
-      "building": 2,
-      "ready": 17,
+      "building": 3,
+      "ready": 16,
       "tested": 0,
       "improving": 1
     },
@@ -69,7 +69,7 @@
       "governance": 7,
       "quarry": 0
     },
-    "with_warnings": 15,
+    "with_warnings": 14,
     "confirmed": 4
   },
   "agents": [
@@ -544,33 +544,27 @@
       "name": "IAM Access Review",
       "repo": "SAAF-Project/Track-2---IAM-final",
       "island": "collection",
-      "maturity": "ready",
-      "category": "AI Security",
+      "maturity": "building",
+      "category": "IT General Controls",
       "language": "Python",
-      "description": "User access review over the full population (IAM).",
+      "description": "Compares an Active Directory export with an HR active-employee list, flags orphaned, mismatched, stale and privileged accounts, and drafts findings in the SAAF finding format for an auditor to review.",
       "tags": [
         "IAM",
-        "Access Review",
+        "access-review",
+        "ITGC",
         "ISO27001",
-        "SOC2"
+        "SOC2",
+        "streamlit",
+        "claude"
       ],
       "depends_on": [],
       "used_by": [],
-      "open_slots": 0,
       "status": "mapped",
-      "source_kind": "seed",
-      "source": "manifests/SAAF-Project__Track-2---IAM-final.yaml",
-      "warnings": [
-        "no mandate block"
-      ],
-      "has_mandate": false,
-      "confirmed": false,
-      "review": {
-        "verdict": "reviewed",
-        "structure": "Streamlit app + standalone CLI + FastAPI web app (bart/ sub-package)",
-        "has_tests": true,
-        "has_samples": true
-      }
+      "source_kind": "repo",
+      "source": "https://raw.githubusercontent.com/SAAF-Project/Track-2---IAM-final/main/agent.yaml",
+      "warnings": [],
+      "has_mandate": true,
+      "confirmed": false
     },
     {
       "name": "Evidence Collection & Extraction",
