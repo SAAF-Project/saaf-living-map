@@ -14,14 +14,14 @@
 | **Repository** | https://github.com/SAAF-Project/saaf-living-map |
 | **Live map** | https://saaf-project.github.io/saaf-living-map/ |
 | **Maintainer(s)** | Tony Barratt (@TonyBarratt100) |
-| **Last reviewed** | 2026-11-15 |
-| **Status** | Draft |
+| **Last reviewed** | 2026-11-23 technical/offline update; maintainer acceptance pending |
+| **Status** | Draft with scoped version-bound test evidence |
 
 ## 1. What the service does
 
 The Living Map collects one manifest per SAAF agent repository and renders them as a public map. A scheduled GitHub Action (hourly by cron; in practice GitHub runs it several times a day, and it can be run by hand) reads `repos.txt`, fetches each repository's own `agent.yaml`, or falls back to a seed manifest in `manifests/` drafted from the portal, checks every manifest against plain rules, and writes `map.json`, which `index.html` renders. There is **no LLM anywhere in the pipeline**: `scripts/build_map.py` is deterministic Python, and the page only reads `map.json`.
 
-What it claims about each agent: its island and maturity (the portal's ids), its dependencies, whether it is **confirmed** (its owners added their own `agent.yaml`) and whether it **has a mandate** that passes every check. `map.json` is public; manifests may come from private repositories.
+What it claims about each agent: its island and maturity (the portal's ids), its dependencies, whether it is **confirmed** (a manifest value or source default; not verified owner acceptance) and whether it **has a mandate** that passes every check. `map.json` is public; manifests may come from private repositories.
 
 ## 2. Control objectives & framework mapping (5)
 
@@ -36,7 +36,7 @@ What it claims about each agent: its island and maturity (the portal's ids), its
 ## 3. Acceptance criteria (testable, pass/fail)
 
 **CO-1**
-- Given a manifest with fields outside the allowlist (e.g. `owner_email`, `internal_notes`), the published entry contains none of them, and their names appear in the build log as dropped.
+- Given a manifest with fields outside the allowlist (e.g. `owner_email`, `internal_notes`), the published entry contains none of them, and only their count appears in the build log as dropped.
 - Given a manifest with a valid mandate, the published entry contains no `mandate` key, only `has_mandate: true`, and the mandate is not reported as dropped.
 - Warnings published in `map.json` count mandate items but never name them.
 - Given a manifest that is not valid YAML, the published warning gives only the line number; no text from the manifest appears in `map.json`.
@@ -81,7 +81,7 @@ Honest limits an auditor would reasonably expect this service to address, that i
 
 - **"Confirmed" is self-declared.** The map does not check who added `agent.yaml`, and a manifest's own `confirmed` value wins. Signed attestations by an independent reviewer would be the long-term answer.
 - **Input limits.** Manifest size, YAML structure and free-text fields are not yet capped, and dependencies on untracked repositories add entries to the map.
-- **Workflow hardening.** Least-privilege permissions per job, actions pinned to commit SHAs, and review of the bot's generated commits are still to do; branch protection on `main` needs an organisation admin.
+- **Workflow hardening.** Job permissions and Action pins are included in this proposal; bot-commit review and branch protection remain separate work. Only main may run the publication job.
 - **Token scope** for reading private repositories is not documented.
 - **The seed generator** (`scripts/seed_from_portal.py`) does not yet validate portal data.
 - **`plan` and `owners`** are proposed in `agent.example.yaml` but not read by the build yet.
@@ -90,7 +90,7 @@ Fixed during the 2026 hardening round: parser error text could reach the public 
 
 ## 6. Observability
 
-**Logged/traced today:** the GitHub Actions log of each run: one line per repository (`+` repo or seed, with its warning count; `-` unmapped; `x` invalid; `~` dropped fields; `!` a repository that could not be read, with the HTTP status or "network error"), and the summary counts. On the map, an unreadable repository carries a warning saying its seed is shown instead. When more repositories than `--max-read-errors` cannot be read, the run fails (red) and `map.json` is left unchanged. `map.json` carries `generated_at` (when the content last changed) and a `summary` block. Every content change is a commit by `living-map-bot`.
+**Logged/traced today:** the GitHub Actions log of each run: one line per repository (`+` repo or seed, with its warning count; `-` unmapped; `x` invalid; `~` count of dropped fields; `!` a repository that could not be read, with the HTTP status or "network error"), and the summary counts. On the map, an unreadable repository carries a warning saying its seed is shown instead. When more repositories than `--max-read-errors` cannot be read, the run fails (red) and `map.json` is left unchanged. `map.json` carries `generated_at` (when the content last changed) and a `summary` block. Every content change is a commit by `living-map-bot`.
 
 **Missing:** no run manifest (input hashes per repository, which source was used and why); no alert beyond the failed run itself; Actions logs expire, so older runs cannot be reconstructed beyond the committed `map.json`.
 
@@ -98,13 +98,13 @@ Fixed during the 2026 hardening round: parser error text could reach the public 
 
 | Acceptance criterion | Verified? | Evidence |
 |---|---|---|
-| CO-1 #1 (non-allowlisted fields dropped and named) | ☑ | `test_unknown_fields_are_dropped_and_named` |
+| CO-1 #1 (non-allowlisted fields and names not published) | Scoped pass | `test_unknown_fields_are_dropped_and_named` (internal API); `test_mixed_unknown_keys_do_not_crash_or_reach_build_logs` (public map/log) |
 | CO-1 #2 (mandate never published, not reported as dropped) | ☑ | `test_mandate_is_never_published_nor_reported_as_dropped` |
 | CO-1 #3 (warnings never name mandate items) | ☑ | `test_warnings_never_name_mandate_items` |
 | CO-1 #4 (YAML errors never quote the manifest) | ☑ | `test_yaml_error_does_not_quote_the_manifest` |
 | CO-2 #1 (seed unconfirmed, repo confirmed) | ☑ | `test_defaults_by_source`, `test_uc8_seed_is_unconfirmed_with_a_clean_mandate` |
 | CO-2 #2 (non-boolean confirmed flagged) | ☑ | `test_non_boolean_is_flagged_and_defaulted` |
-| CO-2 #3 (failing mandate → has_mandate false) | ☐ | Follows from `entry()`; no dedicated test — recommend adding one |
+| CO-2 #3 (failing mandate → has_mandate false) | Scoped pass | `test_invalid_mandate_never_sets_has_mandate` |
 | CO-2 #4 (manifest cannot claim another repo) | ☑ | `test_manifest_cannot_claim_another_repo`, `test_matching_repo_field_gives_no_warning` |
 | CO-2 #5 (unreadable repo shown as seed, with warning) | ☑ | `test_unreadable_repo_shows_its_seed_with_a_warning`, `test_repo_without_agent_yaml_gets_no_read_warning` |
 | CO-3 #1 (example is clean) | ☑ | `test_example_is_clean` |
@@ -116,3 +116,18 @@ Fixed during the 2026 hardening round: parser error text could reach the public 
 | CO-5 #3 (hostile manifests) | ☑ | `tests/test_hostile_manifests.py` |
 | CO-5 #4 (too many read errors → fail, keep last map) | ☑ | `test_too_many_unreadable_repos_fail_and_keep_the_last_map` |
 | Good output: unchanged content → unchanged file | ☑ | `test_same_inputs_keep_generated_at_and_file` |
+
+## Evidence added in this proposal
+
+The original CO-1–CO-5 identifiers and contributor history are preserved. The suite
+now has 55 offline tests. `test_bad_nonpublic_values_are_not_quoted_in_warnings`
+checks error privacy; `test_empty_input_and_negative_error_budget_keep_last_map`
+checks retention on invalid build input. `test_service_manifest_is_valid_but_unconfirmed`
+checks the new service manifest without inventing owner acceptance.
+
+All these are `[code]` checks. No LLM is part of this service; upstream agent
+model quality and actual mandate enforcement remain **not assessed**. Framework
+references above are inherited context, not a newly verified legal crosswalk.
+Record exact head, command, Python/Node versions and CI run; checkmarks in this
+draft do not represent independent certification. No live/private-source build
+was run for these tests and no public map artifact was regenerated.

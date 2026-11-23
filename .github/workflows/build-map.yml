@@ -2,8 +2,6 @@ name: Build living map
 
 on:
   pull_request:
-    paths: [repos.txt, "manifests/**", "scripts/**", "tests/**", agent.example.yaml, .github/workflows/build-map.yml,
-            app.js, index.html, theme-init.js, hash.js]
   push:
     branches: [main]
     paths: [repos.txt, "manifests/**", scripts/build_map.py, "tests/**"]
@@ -12,29 +10,43 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
+
+concurrency:
+  group: living-map-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   # Runs on every trigger, pull requests included: the only job a PR gets.
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: "3.12"
       - run: pip install -r requirements.txt
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: "24"
+      - run: node --version
       - run: python -m unittest discover tests
 
   # Builds and commits map.json: push to main, schedule and manual dispatch only,
   # never from a pull request.
   build:
     needs: test
-    if: github.event_name != 'pull_request'
-    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: write
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: "3.12"
       - run: pip install -r requirements.txt

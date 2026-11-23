@@ -36,7 +36,7 @@ READY_ONWARD = ["ready", "tested", "improving"]
 REQUIRED = ["name", "repo", "island", "maturity", "description"]
 # The only fields an agent entry in map.json may carry. map.json is public and
 # manifests may come from private repos, so anything else a manifest declares is
-# dropped (and named in the build log) rather than passed through.
+# dropped (only their count is logged) rather than passed through.
 PUBLISHED = ["name", "repo", "island", "maturity", "category", "language", "description",
              "tags", "depends_on", "used_by", "open_slots", "status", "source_kind", "source",
              "warnings", "has_mandate", "confirmed", "review"]
@@ -196,7 +196,7 @@ def confirmed(m, kind):
     default = kind == "repo"
     if v is None:
         return default, None
-    return default, f"confirmed must be true or false, not {v!r}"
+    return default, "confirmed must be true or false; source default used"
 
 
 def open_slots(m):
@@ -205,7 +205,7 @@ def open_slots(m):
     v = m.get("open_slots")
     if v is None or (isinstance(v, int) and not isinstance(v, bool)):
         return v, None
-    return 0, f"open_slots must be a whole number, not {v!r}"
+    return 0, "open_slots must be a whole number; using 0"
 
 
 def entry(repo, text, src, kind):
@@ -251,7 +251,7 @@ def entry(repo, text, src, kind):
 
 def publish(m):
     """Keep only the allowlisted fields. Returns (entry, dropped key names)."""
-    dropped = sorted(k for k in m if k not in PUBLISHED)
+    dropped = sorted((k for k in m if k not in PUBLISHED), key=str)
     return {k: m[k] for k in PUBLISHED if k in m}, dropped
 
 
@@ -287,6 +287,10 @@ def main():
 
     repos = [l.split("#")[0].strip() for l in Path(a.repos).read_text().splitlines()]
     repos = [r for r in repos if r]
+    if not repos:
+        ap.error("repository list is empty; map.json not written")
+    if a.max_read_errors < 0:
+        ap.error("--max-read-errors must be non-negative; map.json not written")
 
     agents = {}
     read_errors = []
@@ -321,7 +325,7 @@ def main():
         agents[repo] = m
         print(f"  + {repo}: {kind} ({len(m['warnings'])} warnings)")
         if dropped:
-            print(f"  ~ {repo}: dropped keys not in the allowlist: {', '.join(dropped)}")
+            print(f"  ~ {repo}: dropped {len(dropped)} keys not in the allowlist")
 
     # Too many unreadable repos means the token or GitHub is broken, not the manifests:
     # keep the last good map and fail the job, instead of quietly publishing seeds.

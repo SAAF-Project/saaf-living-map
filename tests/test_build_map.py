@@ -112,7 +112,7 @@ class Confirmed(unittest.TestCase):
     def test_non_boolean_is_flagged_and_defaulted(self):
         e = build_map.entry("SAAF-Project/X", yaml.safe_dump(example() | {"confirmed": "yes please"}), "m.yaml", "seed")
         self.assertFalse(e["confirmed"])
-        self.assertIn("confirmed must be true or false, not 'yes please'", e["warnings"])
+        self.assertIn("confirmed must be true or false; source default used", e["warnings"])
 
     def test_uc8_seed_is_unconfirmed_with_a_clean_mandate(self):
         text, src = seed("SAAF-Project/Audit-Work-Program-Agent-UC-8-")
@@ -169,7 +169,7 @@ class OpenSlots(unittest.TestCase):
         for v in ("lots", "3", 2.5, True, [1], {"n": 1}):
             e = build_map.entry("SAAF-Project/X", yaml.safe_dump(example() | {"open_slots": v}), "m.yaml", "seed")
             self.assertEqual(e["open_slots"], 0, v)
-            self.assertIn(f"open_slots must be a whole number, not {v!r}", e["warnings"])
+            self.assertIn("open_slots must be a whole number; using 0", e["warnings"])
 
     def test_build_completes_with_open_slots_lots(self):
         repo = "SAAF-Project/Audit-Work-Program-Agent-UC-8-"
@@ -186,7 +186,7 @@ class OpenSlots(unittest.TestCase):
             data = json.loads(build_offline(Path(d) / "map.json", fetch_seed=lots))
         a = next(a for a in data["agents"] if a["repo"] == repo)
         self.assertEqual(a["open_slots"], 0)
-        self.assertIn("open_slots must be a whole number, not 'lots'", a["warnings"])
+        self.assertIn("open_slots must be a whole number; using 0", a["warnings"])
         self.assertGreater(len(data["agents"]), 1)
         mapped = [a for a in data["agents"] if a["status"] == "mapped"]
         self.assertEqual(data["summary"]["open_slots"], sum(a.get("open_slots") or 0 for a in mapped))

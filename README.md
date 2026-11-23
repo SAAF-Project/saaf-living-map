@@ -11,16 +11,16 @@
 *Add your agent.* Put an `agent.yaml` in your repo root (see `agent.example.yaml`), open a PR if you don't have push rights, and make sure your repo is listed in `repos.txt`, one `owner/name` per line. The next scheduled build picks it up. Until then the map uses a seed manifest from `manifests/`, drafted from the portal; it counts as unconfirmed until the repo has its own `agent.yaml`.
 
 *How it works.*
-1. `agent.yaml` schema: see `agent.example.yaml`. `island` and `maturity` take the portal's part ids (`foundation`, `planning`, `collection`, `reporting`, `monitoring`, `governance`, `quarry`) and stage keys (`building`, `ready`, `tested`, `improving`), as agreed on [SAAF-Project/saaf-portal#7](https://github.com/SAAF-Project/saaf-portal/pull/7); the labels come from the portal, so they can change without touching any manifest. The portal's `draft-plan` and `final-plan` stages belong to a plan, not a repo, so a manifest never uses them. Two fields are proposed and not read yet: `plan` (the plan the repo implements) and `owners` (who answers for the agent and its mandate); they sit commented out in the example. Until the build reads them, a manifest that sets them still builds: the allowlist drops them and names them in the build log.
-2. `scripts/build_map.py` reads the manifests from the repos in `repos.txt` and writes `map.json`. `map.json` is public, so the `mandate` block is checked but not copied into it; each agent gets `has_mandate: true/false` instead (true only when the block is present and passes every check). Every other field goes through an allowlist (`PUBLISHED` in the script); anything else in a manifest is dropped and named in the build log. `confirmed` says whether the repo has its own `agent.yaml`: it defaults to true for an agent.yaml in the repo and to false for a seed, and the map marks unconfirmed agents. The map does not check who added the file. Run it locally with `pip install pyyaml && python scripts/build_map.py`. Tests: `python -m unittest discover tests`. `map.json` carries `schema_version`, currently 1, which changes only if the file's shape changes in a way readers must handle.
+1. `agent.yaml` schema: see `agent.example.yaml`. `island` and `maturity` take the portal's part ids (`foundation`, `planning`, `collection`, `reporting`, `monitoring`, `governance`, `quarry`) and stage keys (`building`, `ready`, `tested`, `improving`), as agreed on [SAAF-Project/saaf-portal#7](https://github.com/SAAF-Project/saaf-portal/pull/7); the labels come from the portal, so they can change without touching any manifest. The portal's `draft-plan` and `final-plan` stages belong to a plan, not a repo, so a manifest never uses them. Two fields are proposed and not read yet: `plan` (the plan the repo implements) and `owners` (who answers for the agent and its mandate); they sit commented out in the example. Until the build reads them, a manifest that sets them still builds: the allowlist drops them and reports only their count in the build log.
+2. `scripts/build_map.py` reads the manifests from the repos in `repos.txt` and writes `map.json`. `map.json` is public, so the `mandate` block is checked but not copied into it; each agent gets `has_mandate: true/false` instead (true only when the block is present and passes every check). Every other field goes through an allowlist (`PUBLISHED` in the script); anything else in a manifest is dropped; only the count is reported in the build log. `confirmed` says whether the repo has its own `agent.yaml`: it defaults to true for an agent.yaml in the repo and to false for a seed, and the map marks unconfirmed agents. The map does not check who added the file. Run it locally with `pip install pyyaml && python scripts/build_map.py`. Tests: `python -m unittest discover tests`. `map.json` carries `schema_version`, currently 1, which changes only if the file's shape changes in a way readers must handle.
 3. `index.html` renders `map.json` as the island map and an overview. The page accepts deep links, `#island=<id>` and `#agent=<owner/repo>`, and the address bar follows the open agent, so any view can be shared. `.nojekyll` tells GitHub Pages to serve these files as they are, without a Jekyll build.
 
 See also: the mandate guard ([SAAF-Project/Audit-criteria PR #1](https://github.com/SAAF-Project/Audit-criteria/pull/1)) reads the same mandate block but checks different fields: output invariants and approval gates. Aligning the two sets of fields is still open.
 
 ## Prerequisites
 
-- Python 3 with `pyyaml` (the workflow uses Python 3.12: `.github/workflows/build-map.yml`). The code needs at least Python 3.7 (checked with vermin); a currently supported Python version is recommended.
-- Node.js, only for the deep-link tests in `tests/test_hash.js`. `tests/test_deeplink.py` runs them under `python -m unittest` when `node` is available.
+- Python 3.12 and `pyyaml==6.0.3` (the tested workflow version; install `requirements.txt`). The code uses Python 3.9+ syntax; older interpreters are not supported or tested by this batch.
+- Node.js for deep-link and hostile-manifest rendering tests. CI explicitly installs Node 24 and verifies it is present so these tests cannot silently skip there.
 - Optional `GITHUB_TOKEN` environment variable. `scripts/build_map.py` sends it when fetching `agent.yaml` from the agent repos, which private repos need. Without it, only public repos and seed manifests are read. Use `--offline` to build from the seed manifests only. In CI the token comes from the `SAAF_READ_TOKEN` secret, or else the workflow's `GITHUB_TOKEN`. Never commit a token. Keep it in your environment or in a `.env` file, which is gitignored.
 
 ## Limitations & human review
@@ -37,14 +37,14 @@ Treat the map as an overview for finding and planning work, not as evidence of a
 
 ## Observability
 
-- `scripts/build_map.py` prints one line per repo to the build log: `+` mapped, `-` unmapped, `x` invalid manifest, `~` keys dropped by the allowlist. Fetch errors go to stderr. The log is visible in the GitHub Actions run of `build-map.yml`.
+- `scripts/build_map.py` prints one line per repo to the build log: `+` mapped, `-` unmapped, `x` invalid manifest, `~` count of keys dropped by the allowlist. Fetch errors go to stderr. The log is visible in the GitHub Actions run of `build-map.yml`.
 - `map.json` records `generated_at`, a summary, and per-agent `source`, `source_kind` and `warnings`. Its git history shows each change, because the workflow commits it only when it changes.
-- Not recorded: who changed an agent's `agent.yaml` (that history lives in the agent repo), or a separate log of failed builds beyond GitHub Actions run history, which is kept according to the SAAF organisation's retention setting (GitHub's default is 90 days).
+- Not recorded: who changed an agent's `agent.yaml` (that history lives in the agent repo), or a separate log of failed builds beyond GitHub Actions run history, which is kept according to the SAAF organisation's retention setting (not verified here).
 
 ## License & contact
 
-- Code: MIT, see [`LICENSE`](LICENSE) (copyright TonyBarratt100). TODO(owner): confirm that this licence is agreed with Stichting SAAF, which has not yet decided an organisation-wide licence.
-- Maintainer: TonyBarratt100. Contact: open an issue on this repo.
+- Code: existing MIT licence, see [`LICENSE`](LICENSE) (copyright TonyBarratt100), retained unchanged.
+- Maintainer: TonyBarratt100. For ordinary work, open an issue; vulnerabilities follow the private security policy below. This existing maintainer entry does not constitute acceptance of this new batch.
 - Plan: none. The Living Map is shared infrastructure for all agents, not an agent with its own plan.
 
 ## Security notes
@@ -54,3 +54,11 @@ Report a weakness as the [SAAF security policy](https://github.com/SAAF-Project/
 In scope: `scripts/build_map.py` and the build workflow (`.github/workflows/build-map.yml`), the published `map.json` and the map page (`index.html`, `app.js`), and the seed manifests in `manifests/`. Out of scope: the agent repositories themselves (report to their owners) and GitHub's own infrastructure.
 
 What the map publishes, by design: `map.json` is public. It carries only the fields on the build's allowlist; an agent's mandate is checked but never published, and neither are any `owners`. An agent marked "confirmed" has its own agent.yaml in its repository: the map does not verify who added that file.
+
+## Current evidence and boundaries
+
+[AUDIT-CRITERIA.md](AUDIT-CRITERIA.md) retains the five control objectives contributed in PR #22 and maps them to actual tests. The service now declares its own [manifest](agent.yaml), explicitly `confirmed: false` until accepted. The 55 offline tests use mocked GitHub reads and synthetic inputs; they also render the actual browser JavaScript under Node. No paid model or external agent execution is involved.
+
+Invalid `confirmed`/`open_slots` values and unknown field names are never echoed into public warnings or build logs. Allowed fields such as descriptions and review metadata still become public: an allowlist is not a content-redaction service. Owners must approve their publication. An empty inventory or negative read-error budget fails before replacing the existing map.
+
+PR tests have read-only permissions and no persisted checkout credential. Only the existing build job on main keeps write access for its map commit; manual runs on other branches cannot publish. Actions are pinned, including the existing Customs PR #31 contribution. Customs `allow-empty` means **nothing inspected**, not a successful source scan. Branch protection, token scope and source commit binding remain separate work. No repository settings or scheduled build were changed outside this PR.
