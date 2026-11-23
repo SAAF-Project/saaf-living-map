@@ -23,7 +23,7 @@ The Living Map collects one manifest per SAAF agent repository and renders them 
 
 What it claims about each agent: its island and maturity (the portal's ids), its dependencies, whether it is **confirmed** (its owners added their own `agent.yaml`) and whether it **has a mandate** that passes every check. `map.json` is public; manifests may come from private repositories.
 
-## 2. Control objectives & framework mapping (5)
+## 2. Control objectives & framework mapping (6)
 
 | Control objective | Framework + clause/area | Why relevant |
 |---|---|---|
@@ -32,6 +32,7 @@ What it claims about each agent: its island and maturity (the portal's ids), its
 | **CO-3 — A declared mandate is checked for completeness.** It must forbid `change_own_config`, list trusted inputs, give a rationale per forbidden action, name an evidence policy and a human approval step, and (from Ready onward) a maximum runtime. | EU AI Act Art. 14 (human oversight) / OWASP LLM Top 10 — LLM06 Excessive Agency | The mandate is the agent's declared boundary. A mandate without approval steps or reasons is a boundary in name only. |
 | **CO-4 — Island and maturity use only the portal's vocabulary.** Unknown ids, old labels and plan-only stages are flagged, not silently accepted. | COBIT BAI10 (configuration management) | The map and the portal must describe the same thing in the same terms; drift between them breaks the shared picture of SAAF. |
 | **CO-5 — Bad input or a broken source cannot silently degrade the map.** Invalid or hostile manifests become warnings on that agent; when too many repositories cannot be read, the build fails and keeps the last good map. | ISO 27001 A.8.28 (secure coding) / COBIT DSS01 (operations) | Any repository owner can write a manifest, and the build depends on a token and on GitHub being reachable. Failures must be visible, not absorbed. |
+| **CO-6 — Pull requests that change the agent manifests are inspected by Customs, and changes to the Customs setup are visible to the reviewer.** `.github/workflows/customs.yml` runs Customs v1.2.0 (the reusable workflow, pinned to a commit SHA) on every pull request. Besides Customs' default prompt and agent-configuration files, `customs.toml` adds the seed manifests (`manifests/*.yaml`) and `agent.example.yaml`, and approves `saaf-project.github.io` as a destination; Customs reads `customs.toml` from the base branch, so a pull request cannot change the rules that apply to itself. `allow-empty` is on, so a pull request that changes no file Customs inspects reports NOTHING INSPECTED and passes, instead of NOT ASSESSED and failing. The check is **report-only**: it is not required, because requiring it through branch protection on `main` would block `living-map-bot`, which pushes `map.json`; it can be required once a ruleset with the bot on its bypass list exists. A pull request that changes the Customs setup (`customs.toml`, `.customs-allowlist.toml`, `.github/CODEOWNERS`, or anything under `.github/workflows/`) is flagged as CUS-G1, and `.github/CODEOWNERS` names a code owner for `customs.toml`, `.customs-allowlist.toml` and `.github/workflows/`. | OWASP LLM Top 10 — LLM01 Prompt Injection / ISO 27001 A.8.32 (change management) | Manifests are written by repository owners and read by agents and people. While the check is report-only it informs the reviewer but blocks nothing, so a weakened Customs setup must at least be visible in the pull request and owned by a named person. |
 
 ## 3. Acceptance criteria (testable, pass/fail)
 
@@ -63,6 +64,13 @@ What it claims about each agent: its island and maturity (the portal's ids), its
 - Given a non-integer `open_slots`, the value becomes 0 with a warning and the build completes.
 - Given the hostile manifests in `tests/test_hostile_manifests.py`, the build completes and nothing outside the allowlist reaches `map.json`.
 - Given more unreadable repositories than `--max-read-errors` (default 2), the build exits with an error and leaves the existing `map.json` unchanged.
+
+**CO-6**
+- Given a pull request that changes a seed manifest in `manifests/` (or `agent.example.yaml`), Customs inspects that file and reports its result on the pull request.
+- Given a pull request that changes no file Customs inspects (for example only Python or web files), the Customs run reports NOTHING INSPECTED and passes.
+- The Customs check is not required for merging into `main`, and the workflow states why (the bot that pushes `map.json`) and what must exist before it can be (a ruleset with the bot on its bypass list).
+- Given a pull request that changes `customs.toml`, `.customs-allowlist.toml`, `.github/CODEOWNERS` or a file under `.github/workflows/`, Customs reports CUS-G1 for that file.
+- `.github/CODEOWNERS` names a code owner for `customs.toml`, `.customs-allowlist.toml` and `.github/workflows/`.
 
 ## 4. Good output / never do
 
@@ -104,15 +112,20 @@ Fixed during the 2026 hardening round: parser error text could reach the public 
 | CO-1 #4 (YAML errors never quote the manifest) | ☑ | `test_yaml_error_does_not_quote_the_manifest` |
 | CO-2 #1 (seed unconfirmed, repo confirmed) | ☑ | `test_defaults_by_source`, `test_uc8_seed_is_unconfirmed_with_a_clean_mandate` |
 | CO-2 #2 (non-boolean confirmed flagged) | ☑ | `test_non_boolean_is_flagged_and_defaulted` |
-| CO-2 #3 (failing mandate → has_mandate false) | ☐ | Follows from `entry()`; no dedicated test — recommend adding one |
+| CO-2 #3 (failing mandate → has_mandate false) | ☑ | `test_failing_mandate_gives_has_mandate_false` |
 | CO-2 #4 (manifest cannot claim another repo) | ☑ | `test_manifest_cannot_claim_another_repo`, `test_matching_repo_field_gives_no_warning` |
 | CO-2 #5 (unreadable repo shown as seed, with warning) | ☑ | `test_unreadable_repo_shows_its_seed_with_a_warning`, `test_repo_without_agent_yaml_gets_no_read_warning` |
 | CO-3 #1 (example is clean) | ☑ | `test_example_is_clean` |
 | CO-3 #2 (max runtime from Ready onward) | ☑ | `test_max_runtime_required_from_ready_onward` |
-| CO-3 #3 (each mandate gap warned) | ☐ | Logic in `check_mandate()`; only some gaps have named tests |
+| CO-3 #3 (each mandate gap warned) | ☑ | `test_each_mandate_gap_gets_its_own_warning`, `test_all_mandate_gaps_together_are_each_warned` |
 | CO-4 #1–#3 (portal vocabulary) | ☑ | `test_portal_ids_and_keys`, `test_old_labels_are_flagged`, `test_plan_stage_is_flagged`, `test_seeds_use_the_vocabulary` |
 | CO-5 #1 (invalid manifest doesn't stop the build) | ☑ | `test_wrong_field_types_never_stop_the_build`, `test_unexpected_error_marks_only_that_repo_invalid` |
 | CO-5 #2 (bad open_slots tolerated) | ☑ | `test_anything_else_is_zero_and_flagged`, `test_build_completes_with_open_slots_lots` |
 | CO-5 #3 (hostile manifests) | ☑ | `tests/test_hostile_manifests.py` |
 | CO-5 #4 (too many read errors → fail, keep last map) | ☑ | `test_too_many_unreadable_repos_fail_and_keep_the_last_map` |
+| CO-6 #1 (manifest changes inspected) | ☑ | `extra_include` in `customs.toml`; Customs run 45175402028 on test PR #33 (closed unmerged) inspected `manifests/SAAF-Project__WhatsTheNews.yaml` and reported CLEARED |
+| CO-6 #2 (nothing to inspect → NOTHING INSPECTED, passes) | ☑ | `allow-empty: true` in `.github/workflows/customs.yml`; Customs run 45175388233 on test PR #32 (code-only, closed unmerged): inspected 0 files, NOTHING INSPECTED, passed |
+| CO-6 #3 (report-only, reason recorded) | ☑ | Header comment of `.github/workflows/customs.yml`; the repository has no rulesets (`gh api repos/SAAF-Project/saaf-living-map/rulesets` returns `[]`). Branch protection on `main` could not be read without an organisation admin, so its settings are not independently confirmed |
+| CO-6 #4 (Customs setup change → CUS-G1) | ☐ | Partly: Customs run 44884422991 on PR #31 reported CUS-G1 for `.github/workflows/customs.yml`. That covers the workflows folder only; no run yet shows CUS-G1 for `customs.toml`, `.customs-allowlist.toml` or `.github/CODEOWNERS` (Customs v1.2.0 lists them as control files) |
+| CO-6 #5 (code owner for the Customs setup) | ☑ | `.github/CODEOWNERS` lines 5–7 |
 | Good output: unchanged content → unchanged file | ☑ | `test_same_inputs_keep_generated_at_and_file` |
