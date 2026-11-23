@@ -1,0 +1,7 @@
+# Named owner for every file in this repository (SAAF standard 9)
+* @TonyBarratt100
+
+# Customs controls: changes need owner approval
+/customs.toml             @TonyBarratt100
+/.customs-allowlist.toml  @TonyBarratt100
+/.github/workflows/       @TonyBarratt100

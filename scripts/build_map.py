@@ -8,7 +8,7 @@ Repos with neither still appear on the map as "unmapped".
 
 Usage:  python scripts/build_map.py [--repos repos.txt] [--out map.json] [--offline]
 """
-import argparse, json, os, sys, urllib.request, urllib.error
+import argparse, json, os, re, sys, urllib.request, urllib.error
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -40,12 +40,23 @@ REQUIRED = ["name", "repo", "island", "maturity", "description"]
 PUBLISHED = ["name", "repo", "island", "maturity", "category", "language", "description",
              "tags", "depends_on", "used_by", "open_slots", "status", "source_kind", "source",
              "warnings", "has_mandate", "confirmed", "review"]
+# Published fields that must be text, and lists whose items must be text. Anything
+# else is coerced or dropped with a warning, so one manifest cannot crash the build.
+TEXT_FIELDS = ["name", "island", "maturity", "category", "language", "description"]
+TEXT_LISTS = ["tags", "depends_on"]
+# A template blank such as "[Agent name]" or "[repo-name]" that was never filled in.
+# Two or more words, or a hyphenated name, inside brackets: "[UC7]" or "[beta]" is ordinary text.
+PLACEHOLDER = re.compile(r"\[(?=[^\[\]]*[A-Za-z])[^\[\]]*[ -][^\[\]]*\]")
 # Actions every mandate should forbid (the "agents gone rogue" baseline).
 BASELINE_FORBIDDEN = ["change_own_config"]
 
 
 def fetch_remote(repo):
+    """Return (text, url, error). error is None when the file was read, or when the
+    repo simply has no agent.yaml (404 on both branches); otherwise it says why the
+    repo could not be read, so the fallback to a seed is never silent."""
     token = os.environ.get("GITHUB_TOKEN")
+    error = None
     for branch in ("main", "master"):
         url = f"https://raw.githubusercontent.com/{repo}/{branch}/agent.yaml"
         req = urllib.request.Request(url)
@@ -53,14 +64,16 @@ def fetch_remote(repo):
             req.add_header("Authorization", f"Bearer {token}")
         try:
             with urllib.request.urlopen(req, timeout=15) as r:
-                return r.read().decode("utf-8"), url
+                return r.read().decode("utf-8"), url, None
         except urllib.error.HTTPError as e:
             if e.code != 404:
-                print(f"  ! {repo}@{branch}: HTTP {e.code}", file=sys.stderr)
-        except Exception as e:  # network trouble: fall back to seed
-            print(f"  ! {repo}@{branch}: {e}", file=sys.stderr)
+                error = f"HTTP {e.code}"
+                print(f"  ! {repo}@{branch}: {error}", file=sys.stderr)
+        except Exception as e:  # network trouble: fall back to seed, but say so
+            error = "network error"
+            print(f"  ! {repo}@{branch}: {type(e).__name__}", file=sys.stderr)
             break
-    return None, None
+    return None, None, error
 
 
 def fetch_seed(repo):
@@ -72,6 +85,32 @@ def as_list(v):
     if v is None:
         return []
     return v if isinstance(v, list) else [v]
+
+
+def coerce_types(m):
+    """Make every published field the type the build and the page expect. A number,
+    date or true/false where text belongs becomes text; a list or mapping is dropped.
+    List items that are not text are dropped. Returns warnings (they name the field,
+    never its value)."""
+    w = []
+    for f in TEXT_FIELDS:
+        v = m.get(f)
+        if v is None or isinstance(v, str):
+            continue
+        if isinstance(v, (list, dict)):
+            del m[f]
+            w.append(f"{f} must be text; ignored")
+        else:
+            m[f] = str(v)
+            w.append(f"{f} must be text")
+    for f in TEXT_LISTS:
+        items = as_list(m.get(f))
+        kept = [x for x in items if isinstance(x, str) and x.strip()]
+        m[f] = kept
+        if len(kept) < len(items):
+            n = len(items) - len(kept)
+            w.append(f"{n} {f} entr{'ies' if n > 1 else 'y'} not text; ignored")
+    return w
 
 
 def normalize_forbidden(mandate):
@@ -95,7 +134,22 @@ def check(m):
         w.append(f"maturity {m['maturity']} is a plan stage; a repo starts at building")
     elif m.get("maturity") and m["maturity"] not in MATURITY:
         w.append(f"unknown maturity: {m['maturity']} (use one of: {', '.join(MATURITY)})")
-    return w + check_mandate(m)
+    return w + check_placeholders(m) + check_mandate(m)
+
+
+def check_placeholders(m):
+    """Warn about template blanks left in the published text fields or the mandate's
+    purpose. Warnings name the field, never its text."""
+    w = [f"{f} still has a template placeholder" for f in TEXT_FIELDS
+         if isinstance(m.get(f), str) and PLACEHOLDER.search(m[f])]
+    for f in TEXT_LISTS:
+        n = sum(1 for x in as_list(m.get(f)) if isinstance(x, str) and PLACEHOLDER.search(x))
+        if n:
+            w.append(f"{n} {f} entr{'ies' if n > 1 else 'y'} still a template placeholder")
+    mandate = m.get("mandate")
+    if isinstance(mandate, dict) and isinstance(mandate.get("purpose"), str) and PLACEHOLDER.search(mandate["purpose"]):
+        w.append("mandate purpose still has a template placeholder")
+    return w
 
 
 def check_mandate(m):
@@ -105,7 +159,10 @@ def check_mandate(m):
     if not isinstance(mandate, dict):
         w.append("no mandate block")
         return w
-    allowed = set(as_list(mandate.get("allowed_tools")))
+    tools = as_list(mandate.get("allowed_tools"))
+    allowed = {t for t in tools if isinstance(t, str)}
+    if len(allowed) < len(tools):
+        w.append("allowed_tools must be a list of names")
     fl = normalize_forbidden(mandate)
     forbidden = {f["action"] for f in fl}
     # Warnings count rather than name mandate items: they are published in map.json.
@@ -142,28 +199,50 @@ def confirmed(m, kind):
     return default, f"confirmed must be true or false, not {v!r}"
 
 
+def open_slots(m):
+    """The manifest's open_slots if it is a whole number (or absent), else 0 with a
+    warning, so one bad manifest cannot stop the build."""
+    v = m.get("open_slots")
+    if v is None or (isinstance(v, int) and not isinstance(v, bool)):
+        return v, None
+    return 0, f"open_slots must be a whole number, not {v!r}"
+
+
 def entry(repo, text, src, kind):
     """Build the map entry for one manifest text (not yet filtered: see publish)."""
     try:
         m = yaml.safe_load(text) or {}
     except yaml.YAMLError as e:
+        # Never publish the parser's message: it can quote the manifest, and a
+        # private repo's manifest must not leak into the public map or build log.
+        mark = getattr(e, "problem_mark", None)
+        where = f" (line {mark.line + 1})" if mark is not None else ""
         return {"repo": repo, "name": repo.split("/")[-1], "status": "invalid",
                 "source": src, "has_mandate": False, "confirmed": False,
-                "warnings": [f"YAML error: {e}"]}
+                "warnings": [f"manifest is not valid YAML{where}"]}
     if not isinstance(m, dict):
         return {"repo": repo, "name": repo.split("/")[-1], "status": "invalid",
                 "source": src, "has_mandate": False, "confirmed": False,
                 "warnings": ["manifest is not a mapping"]}
-    m["repo"] = m.get("repo") or repo
-    m["depends_on"] = as_list(m.get("depends_on"))
-    m["tags"] = as_list(m.get("tags"))
+    # The repo is the one we fetched from (repos.txt), never what the manifest claims,
+    # so one manifest cannot pose as another agent.
+    claimed = m.get("repo")
+    m["repo"] = repo
+    m.pop("used_by", None)      # computed from depends_on, never taken from a manifest
+    typed = coerce_types(m)
     m["status"] = "mapped"
     m["source_kind"] = kind
     m["source"] = src
-    m["warnings"] = check(m)
+    m["warnings"] = typed + check(m)
+    if claimed and claimed != repo:
+        m["warnings"].append("manifest names a different repo; the repo it was read from is used")
     m["confirmed"], bad = confirmed(m, kind)
     if bad:
         m["warnings"].append(bad)
+    if "open_slots" in m:
+        m["open_slots"], bad = open_slots(m)
+        if bad:
+            m["warnings"].append(bad)
     # Publish only whether a clean mandate exists, never the block itself.
     m["has_mandate"] = isinstance(m.get("mandate"), dict) and not check_mandate(m)
     m.pop("mandate", None)
@@ -177,7 +256,9 @@ def publish(m):
 
 
 def render(out):
-    return json.dumps(out, indent=2, ensure_ascii=False) + "\n"
+    # default=str: a date or other YAML type in a free-form field (e.g. review)
+    # becomes text instead of stopping the build.
+    return json.dumps(out, indent=2, ensure_ascii=False, default=str) + "\n"
 
 
 def keep_generated_at(out, path):
@@ -200,25 +281,38 @@ def main():
     ap.add_argument("--repos", default=str(ROOT / "repos.txt"))
     ap.add_argument("--out", default=str(ROOT / "map.json"))
     ap.add_argument("--offline", action="store_true", help="only use seed manifests")
+    ap.add_argument("--max-read-errors", type=int, default=2,
+                    help="fail without writing the map when more repos than this cannot be read")
     a = ap.parse_args()
 
     repos = [l.split("#")[0].strip() for l in Path(a.repos).read_text().splitlines()]
     repos = [r for r in repos if r]
 
     agents = {}
+    read_errors = []
     for repo in repos:
-        text, src = (None, None) if a.offline else fetch_remote(repo)
+        text, src, err = (None, None, None) if a.offline else fetch_remote(repo)
         kind = "repo"
+        if err:
+            read_errors.append(repo)
         if text is None:
             text, src = fetch_seed(repo)
             kind = "seed"
+        unread = [f"could not read agent.yaml from the repo ({err}); showing the seed instead"] if err else []
         if text is None:
             agents[repo] = {"repo": repo, "name": repo.split("/")[-1], "status": "unmapped",
                             "has_mandate": False, "confirmed": False,
-                            "warnings": ["no agent.yaml in repo and no seed manifest"]}
+                            "warnings": unread + ["no agent.yaml in repo and no seed manifest"]}
             print(f"  - {repo}: unmapped")
             continue
-        m = entry(repo, text, src, kind)
+        try:
+            m = entry(repo, text, src, kind)
+        except Exception as e:  # a last line of defence: one manifest never stops the map
+            print(f"  ! {repo}: {type(e).__name__} while processing the manifest", file=sys.stderr)
+            m = {"repo": repo, "name": repo.split("/")[-1], "status": "invalid",
+                 "source": src, "has_mandate": False, "confirmed": False,
+                 "warnings": ["manifest could not be processed"]}
+        m["warnings"] = unread + m["warnings"]
         if m["status"] == "invalid":
             agents[repo] = m
             print(f"  x {repo}: invalid manifest")
@@ -228,6 +322,13 @@ def main():
         print(f"  + {repo}: {kind} ({len(m['warnings'])} warnings)")
         if dropped:
             print(f"  ~ {repo}: dropped keys not in the allowlist: {', '.join(dropped)}")
+
+    # Too many unreadable repos means the token or GitHub is broken, not the manifests:
+    # keep the last good map and fail the job, instead of quietly publishing seeds.
+    if len(read_errors) > a.max_read_errors:
+        print(f"could not read {len(read_errors)} repos (limit {a.max_read_errors}): "
+              f"{', '.join(read_errors)}; map.json not written", file=sys.stderr)
+        sys.exit(1)
 
     # Dependencies pointing at repos we don't track become ghost nodes.
     for m in list(agents.values()):
@@ -239,7 +340,7 @@ def main():
 
     # Reverse edges: who uses me.
     for m in agents.values():
-        m.setdefault("used_by", [])
+        m["used_by"] = []
     for m in agents.values():
         for d in m.get("depends_on", []):
             agents[d]["used_by"].append(m["repo"])
