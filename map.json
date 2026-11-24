@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-24T17:39:22+00:00",
+  "generated_at": "2026-11-24T21:54:14+00:00",
   "islands": [
     {
       "id": "foundation",
@@ -50,12 +50,12 @@
     }
   ],
   "summary": {
-    "agents": 20,
-    "mapped": 20,
+    "agents": 21,
+    "mapped": 21,
     "unmapped": 0,
     "open_slots": 0,
     "by_maturity": {
-      "building": 3,
+      "building": 4,
       "ready": 16,
       "tested": 0,
       "improving": 1
@@ -63,7 +63,7 @@
     "by_island": {
       "foundation": 0,
       "planning": 3,
-      "collection": 4,
+      "collection": 5,
       "reporting": 3,
       "monitoring": 3,
       "governance": 7,
@@ -299,6 +299,31 @@
       "warnings": [],
       "has_mandate": true,
       "confirmed": true
+    },
+    {
+      "name": "Fieldwork Orchestration",
+      "repo": "SAAF-Project/FieldworkOrchestration",
+      "island": "collection",
+      "maturity": "building",
+      "category": "Evidence Collection",
+      "language": "Python",
+      "description": "Draft PBC and evidence workflows with local call records, a bounded quality-review loop and content-bound local approval status; the web UI remains an unauthenticated prototype.",
+      "tags": [
+        "orchestrator",
+        "PBC",
+        "evidence",
+        "fieldwork",
+        "human-review",
+        "offline-tests"
+      ],
+      "depends_on": [],
+      "used_by": [],
+      "status": "mapped",
+      "source_kind": "repo",
+      "source": "https://raw.githubusercontent.com/SAAF-Project/FieldworkOrchestration/main/agent.yaml",
+      "warnings": [],
+      "has_mandate": true,
+      "confirmed": false
     },
     {
       "name": "GDPR AI Audit",
