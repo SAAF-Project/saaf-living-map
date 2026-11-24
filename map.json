@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-24T05:59:20+00:00",
+  "generated_at": "2026-11-24T17:39:22+00:00",
   "islands": [
     {
       "id": "foundation",
@@ -70,7 +70,7 @@
       "quarry": 0
     },
     "with_warnings": 14,
-    "confirmed": 4
+    "confirmed": 5
   },
   "agents": [
     {
@@ -106,16 +106,18 @@
       }
     },
     {
-      "name": "Work Program",
+      "name": "Work Program (UC8)",
       "repo": "SAAF-Project/Audit-Work-Program-Agent-UC-8-",
       "island": "planning",
       "maturity": "building",
       "category": "Compliance",
       "language": "Python",
-      "description": "Create audit work program based on the delivered risk-control matrix from UC 7.",
+      "description": "Turns a UC7 risk-control matrix into a GIAS 13.5/13.6 work program (test of design, tests of effectiveness, sufficiency flags and auditor assignments) as JSON, Markdown and Excel.",
       "tags": [
         "audit",
         "work-program",
+        "gias",
+        "uc8",
         "anthropic"
       ],
       "depends_on": [
@@ -124,11 +126,11 @@
       "used_by": [],
       "open_slots": 0,
       "status": "mapped",
-      "source_kind": "seed",
-      "source": "manifests/SAAF-Project__Audit-Work-Program-Agent-UC-8-.yaml",
+      "source_kind": "repo",
+      "source": "https://raw.githubusercontent.com/SAAF-Project/Audit-Work-Program-Agent-UC-8-/main/agent.yaml",
       "warnings": [],
       "has_mandate": true,
-      "confirmed": false
+      "confirmed": true
     },
     {
       "name": "Compliance Audit Agent",
@@ -181,7 +183,7 @@
       "open_slots": 0,
       "status": "mapped",
       "source_kind": "repo",
-      "source": "https://raw.githubusercontent.com/SAAF-Project/Compliance-Report-Generator/master/agent.yaml",
+      "source": "https://raw.githubusercontent.com/SAAF-Project/Compliance-Report-Generator/main/agent.yaml",
       "warnings": [],
       "has_mandate": true,
       "confirmed": true
