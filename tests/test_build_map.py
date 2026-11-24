@@ -66,6 +66,83 @@ class Vocabulary(unittest.TestCase):
             self.assertIn(m["maturity"], build_map.MATURITY, p.name)
 
 
+def without(path):
+    """The example manifest with one mandate item removed: path is (key,) or
+    (key, index, subkey) under mandate."""
+    m = example()
+    if len(path) == 1:
+        del m["mandate"][path[0]]
+    else:
+        key, i, sub = path
+        del m["mandate"][key][i][sub]
+    return m
+
+
+def drop_change_own_config():
+    m = example()
+    m["mandate"]["forbidden_actions"] = [
+        f for f in m["mandate"]["forbidden_actions"] if f["action"] != "change_own_config"]
+    return m
+
+
+# CO-3 #3: each mandate gap and the warning it must raise.
+MANDATE_GAPS = {
+    "change_own_config not forbidden": (drop_change_own_config, "mandate does not forbid change_own_config"),
+    "no trusted inputs": (lambda: without(("trusted_inputs",)), "mandate lists no trusted inputs"),
+    "forbidden action without rationale": (lambda: without(("forbidden_actions", 0, "rationale")),
+                                           "1 forbidden action without rationale"),
+    "no evidence policy": (lambda: without(("evidence_policy",)), "mandate has no evidence policy"),
+    "no human approval step": (lambda: without(("human_approval_required_for",)),
+                               "mandate has no human approval step"),
+}
+
+
+def repo_entry(m):
+    # Read from the repo the example names, so no unrelated warning is added.
+    return build_map.entry(m["repo"], yaml.safe_dump(m), "agent.yaml", "repo")
+
+
+class MandateChecks(unittest.TestCase):
+    def test_example_mandate_is_clean_and_counts(self):
+        # The baseline the tests below change one thing at a time.
+        e = repo_entry(example())
+        self.assertEqual(e["warnings"], [])
+        self.assertTrue(e["has_mandate"])
+
+    def test_failing_mandate_gives_has_mandate_false(self):
+        # CO-2 #3: any failed mandate check, not only the CO-3 gaps, withholds the badge.
+        failing = {name: make() for name, (make, _) in MANDATE_GAPS.items()}
+        m = example(); m["mandate"]["allowed_tools"].append("send_email")
+        failing["tool both allowed and forbidden"] = m
+        m = example(); m["mandate"]["allowed_tools"] = [["read_rcm"]]
+        failing["allowed_tools not names"] = m
+        failing["ready agent without max runtime"] = without(("max_runtime_minutes",))
+        m = example(); m["mandate"] = "approved elsewhere"
+        failing["mandate not a mapping"] = m
+        for name, m in failing.items():
+            with self.subTest(name):
+                e = repo_entry(m)
+                self.assertFalse(e["has_mandate"], e["warnings"])
+                self.assertTrue(e["warnings"], "a failed check must also be warned")
+
+    def test_each_mandate_gap_gets_its_own_warning(self):
+        # CO-3 #3: one gap gives exactly its own warning, and no other.
+        for name, (make, expected) in MANDATE_GAPS.items():
+            with self.subTest(name):
+                self.assertEqual(repo_entry(make())["warnings"], [expected])
+
+    def test_all_mandate_gaps_together_are_each_warned(self):
+        # CO-3 #3: gaps do not mask one another.
+        m = example()
+        md = m["mandate"]
+        md["forbidden_actions"] = [f for f in md["forbidden_actions"] if f["action"] != "change_own_config"]
+        md["forbidden_actions"][0]["rationale"] = None
+        for k in ("trusted_inputs", "evidence_policy", "human_approval_required_for"):
+            del md[k]
+        w = repo_entry(m)["warnings"]
+        self.assertEqual(sorted(w), sorted(expected for _, expected in MANDATE_GAPS.values()))
+
+
 def seed(repo):
     p = ROOT / "manifests" / (repo.replace("/", "__") + ".yaml")
     return p.read_text("utf-8"), str(p.relative_to(ROOT))
