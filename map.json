@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-23T21:17:50+00:00",
+  "generated_at": "2026-11-24T05:59:20+00:00",
   "islands": [
     {
       "id": "foundation",
@@ -181,7 +181,7 @@
       "open_slots": 0,
       "status": "mapped",
       "source_kind": "repo",
-      "source": "https://raw.githubusercontent.com/SAAF-Project/Compliance-Report-Generator/main/agent.yaml",
+      "source": "https://raw.githubusercontent.com/SAAF-Project/Compliance-Report-Generator/master/agent.yaml",
       "warnings": [],
       "has_mandate": true,
       "confirmed": true
