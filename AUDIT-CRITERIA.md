@@ -19,7 +19,7 @@
 
 ## 1. What the service does
 
-The Living Map collects one manifest per SAAF agent repository and renders them as a public map. A scheduled GitHub Action (hourly by cron; in practice GitHub runs it several times a day, and it can be run by hand) reads `repos.txt`, fetches each repository's own `agent.yaml`, or falls back to a seed manifest in `manifests/` drafted from the portal, checks every manifest against plain rules, and writes `map.json`, which `index.html` renders. There is **no LLM anywhere in the pipeline**: `scripts/build_map.py` is deterministic Python, and the page only reads `map.json`.
+The Living Map collects one manifest per SAAF agent repository and renders them as a public map. A scheduled GitHub Action (cron at minutes 17, 37 and 57 of every hour; GitHub may delay or skip scheduled runs, and it can be run by hand) reads `repos.txt`, fetches each repository's own `agent.yaml`, or falls back to a seed manifest in `manifests/` drafted from the portal, checks every manifest against plain rules, and writes `map.json`, which `index.html` renders. There is **no LLM anywhere in the pipeline**: `scripts/build_map.py` is deterministic Python, and the page only reads `map.json`.
 
 What it claims about each agent: its island and maturity (the portal's ids), its dependencies, whether it is **confirmed** (its owners added their own `agent.yaml`) and whether it **has a mandate** that passes every check. `map.json` is public; manifests may come from private repositories.
 
