@@ -4,7 +4,9 @@
 
 *Problem.* SAAF's agents live in GitHub repos and in a portal list with a review status. Maturity, phase and dependencies are tracked by hand and go stale.
 
-*Idea.* Each agent repo carries a small agent.yaml. A GitHub Action collects them and renders one map: islands (the SAAF portal's parts: Shared Infrastructure, Planning, Evidence Collection, Reporting, Compliance & Regulatory Assessment, AI Governance & QA, and the quarry of unassigned work), maturity (Building → Ready → Tested → Improving), dependencies and open slots. It is rebuilt on a schedule (hourly by cron, though GitHub can delay runs), so a change in an agent repo shows up at the next run.
+*Idea.* Each agent repo carries a small agent.yaml. A GitHub Action collects them and renders one map: islands (the SAAF portal's parts: Shared Infrastructure, Planning, Evidence Collection, Reporting, Compliance & Regulatory Assessment, AI Governance & QA, and the quarry of unassigned work), maturity (Building → Ready → Tested → Improving), dependencies and open slots. It is rebuilt on a schedule (cron at minutes 17, 37 and 57 of every hour), but GitHub may delay or skip scheduled runs, so a change in an agent repo can take hours to appear.
+
+Maintainers can refresh the map by hand: `gh workflow run "Build living map" -R SAAF-Project/saaf-living-map`.
 
 *Who benefits.* Participants find an agent to reuse or join. Maintainers see gaps and plan hackathon tracks. Member organisations see what SAAF has delivered and how mature it is.
 
