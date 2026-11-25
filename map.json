@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-24T21:54:14+00:00",
+  "generated_at": "2026-11-25T19:17:12+00:00",
   "islands": [
     {
       "id": "foundation",
@@ -70,7 +70,7 @@
       "quarry": 0
     },
     "with_warnings": 14,
-    "confirmed": 5
+    "confirmed": 6
   },
   "agents": [
     {
@@ -307,7 +307,7 @@
       "maturity": "building",
       "category": "Evidence Collection",
       "language": "Python",
-      "description": "Draft PBC and evidence workflows with local call records, a bounded quality-review loop and content-bound local approval status; the web UI remains an unauthenticated prototype.",
+      "description": "Draft PBC and evidence workflows with local call records, a bounded quality-review loop and content-bound, signed approvals; the web UI is a prototype with no login of its own (only approving and changing roles use a signed-in user from a sign-on proxy).",
       "tags": [
         "orchestrator",
         "PBC",
@@ -323,7 +323,7 @@
       "source": "https://raw.githubusercontent.com/SAAF-Project/FieldworkOrchestration/main/agent.yaml",
       "warnings": [],
       "has_mandate": true,
-      "confirmed": false
+      "confirmed": true
     },
     {
       "name": "GDPR AI Audit",
